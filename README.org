@@ -1,0 +1,56 @@
+#+TITLE: Sealable Metaobjects
+
+* Introduction
+We present an extension of the Common Lisp Object System (CLOS) that allows
+a compiler to inline a generic function under certain conditions.
+
+We should note that moving parts of the callee into the caller is usually a
+very bad idea.  It prevents safe and efficient function redefinition and
+inflates the amount of generated machine code at the call site.  Most
+severely, when moving parts of a generic function to the caller, we lose
+the ability to redefine or extend some of the involved objects and
+metaobjects.
+
+Nevertheless, there are two cases where the aforementioned drawbacks are
+tolerable.  The one case is when passing built-in Common Lisp objects to
+specified functions.  The other case is for user code that has such extreme
+performance demands that the alternative of using this technique would be
+to refrain from using generic functions altogether.
+
+* The Technique
+The goal is to inline a generic function under certain circumstances.
+These circumstances are:
+
+1. It is possible to statically determine the generic function being
+   called.
+
+2. This generic function is sealed, i.e., it is an instance of
+   SEALABLE-GENERIC-FUNCTION that has previously been passed to the
+   function SEAL-GENERIC-FUNCTION.
+
+3. This sealed generic function has at least one sealed method, i.e., a
+   method that is an instance of SEALABLE-METHOD that has previously been
+   passed to the function SEAL-METHOD.  Furthermore this generic function
+   has a specializer mask, that describes which of its mandatory arguments
+   may be subject to a specializer other than the class T.
+
+4. It must be possible to determine, statically, the class of all arguments
+   that appear in a position where the specializer mask allows
+   specialization.  This class must be a sealed class, i.e., either an
+   instance of BUILT-IN-CLASS, or an instance of SEALABLE-CLASS that has
+   previously been passed to the function SEAL-CLASS.
+
+5. All possible calls that have objects of the given classes (and, most
+   importantly, subclasses thereof) in a specializing position have the
+   same list of applicable methods.
+
+The correctness of this approach depends on restrictive definitions of
+SEALABLE-METHOD, SEALABLE-GENERIC-FUNCTION and SEALABLE-CLASS, which we
+will discuss now.
+
+* Restrictions on Sealable Metaobjects
+
+* Related Work
+- https://github.com/guicho271828/inlined-generic-function
+- https://opendylan.org/books/drm/Define_Sealed_Domain
+- Generic Function Sealing by Paul Khuong
