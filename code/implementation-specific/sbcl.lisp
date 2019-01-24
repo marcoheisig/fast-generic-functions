@@ -6,10 +6,12 @@
       (sb-int:parse-lambda-list (generic-function-lambda-list gf) :context 'defmethod)
     (declare (ignore bitmask))
     (let* ((name (generic-function-name gf))
-           (types (mapcar #'type-from-specializer specializers))
+           (types (mapcar #'specializer-type specializers))
            (applicable-methods
              ;; TODO Probably doesn't work for EQL specializers.
-             (sb-pcl::compute-applicable-methods-using-classes gf specializers))
+             (sb-pcl::compute-applicable-methods
+              gf
+              (mapcar #'specializer-prototype specializers)))
            (restp (not (not (or optional rest key))))
            (rest-arg (gensym "REST")))
       (eval
@@ -40,7 +42,12 @@
         (setf (gethash key *effective-method-functions*)
               (sb-pcl::get-effective-method-function gf applicable-methods)))))
 
-(defun type-from-specializer (specializer)
+(defun specializer-type (specializer)
   (etypecase specializer
     (eql-specializer `(eql ,(eql-specializer-object specializer)))
     (class (class-name specializer))))
+
+(defun specializer-prototype (specializer)
+  (etypecase specializer
+    (eql-specializer (eql-specializer-object specializer))
+    (class (class-prototype specializer))))
