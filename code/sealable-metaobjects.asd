@@ -12,6 +12,7 @@
    (:file "sealable-standard-class")
    (:file "sealable-standard-method")
    (:file "sealable-standard-generic-function")
-   (:module "implementation-dependent"
+   (:module "implementation-specific"
     :components
-    ((:file "sbcl" :if-feature :sbcl)))))
+    ((:file "sbcl" :if-feature :sbcl)
+     (:file "default" :if-feature (:not (:or :sbcl)))))))
