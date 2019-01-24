@@ -1,5 +1,7 @@
 (in-package #:sealable-metaobjects)
 
+(defvar *seal-classes-eagerly* t)
+
 (defclass sealable-class (sealable-metaobject-mixin class)
   ())
 
@@ -14,23 +16,26 @@
 
 ;;; Ensure that a finalized sealable class is never mutated.
 
-(defmethod change-class :around
+(defmethod change-class :before
     ((sealable-class sealable-class) new-class-name &key &allow-other-keys)
   (when (class-sealed-p sealable-class)
     (error "Attempt to change the class of a sealed class.")))
 
-(defmethod reinitialize-instance :around
+(defmethod reinitialize-instance :before
     ((sealable-class sealable-class) &key &allow-other-keys)
   (when (class-sealed-p sealable-class)
     (error "Attempt to redefine a sealed class.")))
 
 ;;; Ensure that instances of sealed classes never have their class changed.
 
-(defmethod change-class :around
+(defmethod change-class :before
     ((instance sealable-class-instance) new-class-name &key &allow-other-keys)
   (when (class-sealed-p (class-of instance))
     (error "Attempt to change the class of an instance of a sealed class.")))
 
-
 (defmethod specializer-sealed-p ((sealable-class sealable-class))
   (class-sealed-p sealable-class))
+
+(defmethod finalize-inheritance :before ((class sealable-class))
+  (when *seal-classes-eagerly*
+    (seal-class class)))
