@@ -8,5 +8,8 @@
   t)
 
 (defmethod seal-metaobject ((metaobject sealable-metaobject-mixin))
-  (setf (slot-value metaobject '%sealed-p) t)
+  (setf (slot-value metaobject '%sealed-p) t))
+
+(defmethod seal-metaobject :around ((metaobject sealable-metaobject-mixin))
+  (call-next-method)
   metaobject)
