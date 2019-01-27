@@ -31,7 +31,7 @@
                       (and (member arg (rest match)) t))
                     required-args)))))
     (unless (member :method-class options :key #'first)
-      (push `(:method-class sealable-standard-method) options))
+      (push `(:method-class potentially-sealable-standard-method) options))
     (unless (member :generic-function-class options :key #'first)
       (push `(:generic-function-class sealable-standard-generic-function) options))
     `(progn

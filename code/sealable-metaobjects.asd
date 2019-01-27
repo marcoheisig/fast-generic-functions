@@ -7,10 +7,10 @@
    (:file "generic-functions")
    (:file "sealable-metaobject-mixin")
    (:file "sealable-class")
-   (:file "sealable-method")
+   (:file "potentially-sealable-method")
    (:file "sealable-generic-function")
    (:file "sealable-standard-class")
-   (:file "sealable-standard-method")
+   (:file "potentially-sealable-standard-method")
    (:file "sealable-standard-generic-function")
    (:module "implementation-specific"
     :components

@@ -3,7 +3,7 @@
 (defvar *seal-classes-eagerly* t)
 
 (defclass sealable-class (sealable-metaobject-mixin class)
-  ((%seal-eagerly :initform *seal-classes-eagerly*)))
+  ((%seal-eagerly-p :initform *seal-classes-eagerly* :reader seal-eagerly-p)))
 
 (defclass sealable-class-instance (t)
   ())
@@ -18,13 +18,13 @@
 
 (defun inherits (class other-class)
   (let ((table (make-hash-table :test #'eq)))
-    (labels ((search-class (class)
+    (labels ((scan (class)
                (unless (gethash class table)
                  (setf (gethash class table) t)
                  (when (eq class other-class)
                    (return-from inherits t))
-                 (mapc #'search-class (class-direct-superclasses class)))))
-      (search-class class))))
+                 (mapc #'scan (class-direct-superclasses class)))))
+      (scan class))))
 
 ;;; Ensure that a finalized sealable class is never mutated.
 
@@ -49,5 +49,5 @@
   (class-sealed-p sealable-class))
 
 (defmethod finalize-inheritance :before ((class sealable-class))
-  (when (slot-value class '%seal-eagerly)
+  (when (seal-eagerly-p class)
     (seal-class class)))

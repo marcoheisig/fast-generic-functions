@@ -28,7 +28,7 @@
         '()
         (apply #'alexandria:map-product #'list specializer-lists))))
 
-(defmethod add-method :before ((sgf sealable-generic-function) (sm sealable-method))
+(defmethod add-method :before ((sgf sealable-generic-function) (sm potentially-sealable-method))
   (when (and (generic-function-sealed-p sgf)
              (method-sealed-p sm))
     (error "~@<Must not add further sealed methods to the already sealed ~
