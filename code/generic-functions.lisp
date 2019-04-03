@@ -67,4 +67,8 @@
      (class-of
       (eql-specializer-object eql-specializer)))))
 
-(defgeneric make-inlineable (generic-function specializers))
+;;; Miscellaneous Accessors
+
+(defgeneric generic-function-specializer-profile (generic-function))
+
+(defgeneric method-inline-lambda (method))

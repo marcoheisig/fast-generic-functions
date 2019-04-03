@@ -6,28 +6,6 @@
   ((%specializer-profile :accessor generic-function-specializer-profile))
   (:metaclass funcallable-standard-class))
 
-(defmethod seal-metaobject :after ((sgf sealable-generic-function))
-  (mapc
-   (lambda (call-signature)
-     (make-inlineable sgf call-signature))
-   (compute-static-call-signatures
-    (generic-function-specializer-profile sgf)
-    (remove-if-not #'method-sealed-p (generic-function-methods sgf)))))
-
-(defun compute-static-call-signatures (specializer-profile sealed-methods)
-  (let* ((list-of-specializers (mapcar #'method-specializers sealed-methods))
-         (specializer-lists
-           (mapcar
-            (lambda (specializer-list mask-bit)
-              (if mask-bit
-                  (remove-duplicates specializer-list :test #'equal)
-                  (list (find-class 't))))
-            (apply #'mapcar #'list list-of-specializers)
-            specializer-profile)))
-    (if (null specializer-lists)
-        '()
-        (apply #'alexandria:map-product #'list specializer-lists))))
-
 (defmethod add-method :before ((sgf sealable-generic-function) (sm potentially-sealable-method))
   (when (and (generic-function-sealed-p sgf)
              (method-sealed-p sm))
@@ -42,3 +20,14 @@
                       (~S) in position where its specializer profile ~
                       forbids specialization.~:@>"
                    argument-number sm specializer))))
+
+(defmethod make-method-lambda :around
+    ((sgf sealable-generic-function)
+     (psm potentially-sealable-method)
+     lambda-expression
+     environment)
+  (multiple-value-bind (method-lambda initargs)
+      (call-next-method)
+    (if (null-lexical-environement-p environment)
+        (values method-lambda (list* '%inline-lambda lambda-expression initargs))
+        (values method-lambda initargs))))

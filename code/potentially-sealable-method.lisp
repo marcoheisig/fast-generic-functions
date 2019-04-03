@@ -3,19 +3,21 @@
 (defvar *seal-methods-eagerly* t)
 
 (defclass potentially-sealable-method (sealable-metaobject-mixin method)
-  ())
+  ((%inline-lambda :initarg %inline-lambda :reader method-inline-lambda)))
 
-(defmethod initialize-instance :after ((sm potentially-sealable-method) &key &allow-other-keys)
+(defmethod add-method :after ((gf generic-function) (sm potentially-sealable-method))
   (when (and *seal-methods-eagerly*
              (metaobject-sealable-p sm))
     (seal-method sm)))
 
 (defmethod metaobject-sealable-p ((sm potentially-sealable-method))
   (every
-   (lambda (specializer)
+   (lambda (specializer specializing-p)
      (or (specializer-sealed-p specializer)
-         (eq specializer (find-class 't))))
-   (method-specializers sm)))
+         (and (not specializing-p)
+              (eq specializer (find-class 't)))))
+   (method-specializers sm)
+   (generic-function-specializer-profile (method-generic-function sm))))
 
 (defmethod seal-metaobject ((sm potentially-sealable-method))
   (if (metaobject-sealable-p sm)

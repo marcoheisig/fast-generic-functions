@@ -5,6 +5,7 @@
   :components
   ((:file "packages")
    (:file "generic-functions")
+
    (:file "sealable-metaobject-mixin")
    (:file "sealable-class")
    (:file "potentially-sealable-method")
@@ -12,7 +13,9 @@
    (:file "sealable-standard-class")
    (:file "potentially-sealable-standard-method")
    (:file "sealable-standard-generic-function")
+
    (:module "implementation-specific"
     :components
-    ((:file "sbcl" :if-feature :sbcl)
+    ((:file "packages")
+     (:file "sbcl" :if-feature :sbcl)
      (:file "default" :if-feature (:not (:or :sbcl)))))))
