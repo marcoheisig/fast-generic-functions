@@ -45,7 +45,9 @@
 ;;; Sealing of metaobjects
 
 (defgeneric seal-metaobject (metaobject)
-  (:documentation ""))
+  (:method ((object t))
+    (declare (ignore object))
+    (values)))
 
 (defgeneric seal-class (class)
   (:method ((class class))

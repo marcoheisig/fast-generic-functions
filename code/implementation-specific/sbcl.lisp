@@ -41,33 +41,30 @@
              (types (mapcar #'specializer-type specializers))
              (restp (not (not (or optional rest key))))
              (rest-arg (gensym "REST")))
-         (print types)
          (cond
            ((null applicable-methods)
             `(progn))
            ((null restp)
             `(sb-c:deftransform ,name ((,@required) (,@types))
-               (print
-                (if ,(= 1 (length applicable-methods))
-                    `(funcall ,',(sealable-metaobjects::method-inline-lambda
-                                  (first applicable-methods))
-                              ,@',required)
-                    `(sb-pcl::invoke-effective-method-function
-                      ,',(effective-method-function gf applicable-methods)
-                      ,',restp
-                      :required-args ,',required)))))
+               (if ,(= 1 (length applicable-methods))
+                   `(funcall ,',(sealable-metaobjects::method-inline-lambda
+                                 (first applicable-methods))
+                             ,@',required)
+                   `(sb-pcl::invoke-effective-method-function
+                     ,',(effective-method-function gf applicable-methods)
+                     ,',restp
+                     :required-args ,',required))))
            ((not (null restp))
             `(sb-c:deftransform ,name ((,@required &rest ,rest-arg) (,@types &rest t))
-               (print
-                (if ,(= 1 (length applicable-methods))
-                    `(apply ,',(sealable-metaobjects::method-inline-lambda
-                                (first applicable-methods))
-                            ,@',required ,',rest-arg)
-                    `(sb-pcl::invoke-effective-method-function
-                      ,',(effective-method-function gf applicable-methods)
-                      ,',restp
-                      :required-args ,',required
-                      :rest-arg ,'(,rest-arg))))))))))))
+               (if ,(= 1 (length applicable-methods))
+                   `(apply ,',(sealable-metaobjects::method-inline-lambda
+                               (first applicable-methods))
+                           ,@',required ,',rest-arg)
+                   `(sb-pcl::invoke-effective-method-function
+                     ,',(effective-method-function gf applicable-methods)
+                     ,',restp
+                     :required-args ,',required
+                     :rest-arg ,'(,rest-arg)))))))))))
 
 ;;; A hash table, mapping from (generic-function applicable-methods)
 ;;; entries to effective method functions.

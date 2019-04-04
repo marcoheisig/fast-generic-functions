@@ -6,6 +6,8 @@
    #:*seal-methods-eagerly*
    #:*seal-classes-eagerly*
    #:*seal-generic-functions-eagerly*
+   #:define-sealable-generic-function
+   #:generic-function-specializer-profile
 
    #:metaobject-sealable-p
    #:class-sealable-p
@@ -22,7 +24,6 @@
    #:seal-generic-function
    #:seal-method
 
-   #:generic-function-specializer-profile
    #:sealable-class
    #:sealable-class-instance
    #:sealable-generic-function

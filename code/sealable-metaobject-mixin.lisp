@@ -11,5 +11,6 @@
   (setf (slot-value metaobject '%sealed-p) t))
 
 (defmethod seal-metaobject :around ((metaobject sealable-metaobject-mixin))
-  (call-next-method)
+  (unless (metaobject-sealed-p metaobject)
+    (call-next-method))
   metaobject)
