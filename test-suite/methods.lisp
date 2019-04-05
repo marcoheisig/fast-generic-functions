@@ -46,7 +46,6 @@
 (defmethod rest-args (a1 (a2 number) &rest rest)
   (+ a1 a2 (length rest)))
 
-(mapc #'seal-generic-function
-      (list #'generic-binary-+
-            #'generic-binary-*
-            #'rest-args))
+(seal-generic-function #'generic-binary-+)
+(seal-generic-function #'generic-binary-*)
+(seal-generic-function #'rest-args)

@@ -3,8 +3,12 @@
 (defvar *seal-generic-functions-eagerly* t)
 
 (defclass sealable-generic-function (sealable-metaobject-mixin generic-function)
-  ((%specializer-profile :accessor generic-function-specializer-profile))
+  ((%specializer-profile
+    :accessor generic-function-specializer-profile))
   (:metaclass funcallable-standard-class))
+
+(defmethod seal-metaobject :before ((sgf sealable-generic-function))
+  (mapc #'seal-method (generic-function-methods sgf)))
 
 (defmethod add-method :before ((sgf sealable-generic-function) (sm potentially-sealable-method))
   (when (and (generic-function-sealed-p sgf)
@@ -24,10 +28,19 @@
 (defmethod make-method-lambda :around
     ((sgf sealable-generic-function)
      (psm potentially-sealable-method)
-     lambda-expression
+     lambda
      environment)
   (multiple-value-bind (method-lambda initargs)
       (call-next-method)
-    (if (null-lexical-environement-p environment)
-        (values method-lambda (list* '%inline-lambda lambda-expression initargs))
-        (values method-lambda initargs))))
+    (flet ((extend-initargs (key value)
+             (push value initargs)
+             (push key initargs)))
+      (extend-initargs 'specializer-profile (generic-function-specializer-profile sgf))
+      (when (= 1 (length
+                  (compute-applicable-methods
+                   #'make-method-lambda
+                   (list sgf psm lambda environment))))
+        (if (inlineable-method-lambda-p lambda environment)
+            (extend-initargs 'inline-lambda lambda)
+            (warn "The method body~% ~S~%is too hairy for method inlining." lambda)))
+      (values method-lambda initargs))))

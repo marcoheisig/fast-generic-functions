@@ -4,6 +4,9 @@
   :serial t
   :components
   ((:file "packages")
+   (:file "null-lexical-environment-p")
+   (:file "inlineable-method-lambda-p")
+   (:file "expand-effective-method")
    (:file "generic-functions")
 
    (:file "sealable-metaobject-mixin")
@@ -16,6 +19,5 @@
 
    (:module "implementation-specific"
     :components
-    ((:file "packages")
-     (:file "sbcl" :if-feature :sbcl)
+    ((:file "sbcl" :if-feature :sbcl)
      (:file "default" :if-feature (:not (:or :sbcl)))))))

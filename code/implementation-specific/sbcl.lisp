@@ -1,86 +1,62 @@
-(in-package #:sealable-metaobjects-implementation-specific)
+(in-package #:sealable-metaobjects)
+
+(defvar *fast-methods* (make-array 0 :adjustable t :fill-pointer 0))
+(declaim (type (vector t) *fast-methods*))
 
 (defmethod seal-metaobject :after
     ((sgf sealable-generic-function))
   (eval `(sb-c:defknown ,(generic-function-name sgf) * * () :overwrite-fndb-silently t))
   (mapc
    (lambda (call-signature)
-     (make-inlineable sgf call-signature))
-   (compute-static-call-signatures
-    (generic-function-specializer-profile sgf)
-    (remove-if-not #'method-sealed-p (generic-function-methods sgf)))))
+     (eval (make-deftransform sgf call-signature)))
+   (compute-static-call-signatures sgf)))
 
-(defun compute-static-call-signatures (specializer-profile sealed-methods)
-  (let* ((list-of-specializers (mapcar #'method-specializers sealed-methods))
+(defun compute-static-call-signatures (sgf)
+  (let* ((sealed-methods (remove-if-not #'method-sealed-p (generic-function-methods sgf)))
+         (list-of-specializers (mapcar #'method-specializers sealed-methods))
          (specializer-lists
            (mapcar
             (lambda (specializer-list mask-bit)
               (if mask-bit
-                  (remove-duplicates specializer-list :test #'equal)
+                  (remove-duplicates specializer-list :test #'eq)
                   (list (find-class 't))))
             (apply #'mapcar #'list list-of-specializers)
-            specializer-profile)))
+            (generic-function-specializer-profile sgf))))
     (if (null specializer-lists)
         '()
         (apply #'alexandria:map-product #'list specializer-lists))))
 
-(defun sealable-metaobjects::null-lexical-environement-p (environment)
-  (sb-c::null-lexenv-p environment))
-
-(defun make-inlineable (gf specializers)
+(defun make-deftransform (gf specializers)
   (with-accessors ((name generic-function-name)
                    (lambda-list generic-function-lambda-list)) gf
-    (eval
-     (multiple-value-bind (bitmask required optional rest key)
-         (sb-int:parse-lambda-list (generic-function-lambda-list gf) :context 'defmethod)
-       (declare (ignore bitmask))
-       (let ((applicable-methods
-               (sb-pcl::compute-applicable-methods
-                gf
-                (mapcar #'specializer-prototype specializers)))
-             (types (mapcar #'specializer-type specializers))
-             (restp (not (not (or optional rest key))))
-             (rest-arg (gensym "REST")))
-         (cond
-           ((null applicable-methods)
-            `(progn))
-           ((null restp)
-            `(sb-c:deftransform ,name ((,@required) (,@types))
-               (if ,(= 1 (length applicable-methods))
-                   `(funcall ,',(sealable-metaobjects::method-inline-lambda
-                                 (first applicable-methods))
-                             ,@',required)
-                   `(sb-pcl::invoke-effective-method-function
-                     ,',(effective-method-function gf applicable-methods)
-                     ,',restp
-                     :required-args ,',required))))
-           ((not (null restp))
-            `(sb-c:deftransform ,name ((,@required &rest ,rest-arg) (,@types &rest t))
-               (if ,(= 1 (length applicable-methods))
-                   `(apply ,',(sealable-metaobjects::method-inline-lambda
-                               (first applicable-methods))
-                           ,@',required ,',rest-arg)
-                   `(sb-pcl::invoke-effective-method-function
-                     ,',(effective-method-function gf applicable-methods)
-                     ,',restp
-                     :required-args ,',required
-                     :rest-arg ,'(,rest-arg)))))))))))
-
-;;; A hash table, mapping from (generic-function applicable-methods)
-;;; entries to effective method functions.
-
-(defparameter *effective-method-functions* (make-hash-table :test #'equal))
-
-(defun effective-method-function (gf applicable-methods)
-  (let ((key (list gf applicable-methods)))
-    (or (gethash key *effective-method-functions*)
-        (setf (gethash key *effective-method-functions*)
-              (sb-pcl::get-effective-method-function gf applicable-methods)))))
+    (let* ((applicable-methods
+             (compute-applicable-methods
+              gf
+              (mapcar #'specializer-prototype specializers)))
+           (types (mapcar #'specializer-type specializers))
+           (index (vector-push-extend
+                   (let ((emf (sb-pcl::get-effective-method-function gf applicable-methods)))
+                     (lambda (&rest args)
+                       (sb-pcl::invoke-emf emf args)))
+                   *fast-methods*)))
+      (assert (every #'method-sealed-p applicable-methods))
+      `(sb-c:deftransform ,name ((&rest rest) (,@types &rest *))
+         (let ((gensyms (loop for r in rest collect (gensym))))
+           `(lambda (,@gensyms)
+              (funcall
+               ,',(if (and (= 1 (length applicable-methods))
+                           (null (method-qualifiers (first applicable-methods)))
+                           (method-inline-lambda (first applicable-methods)))
+                      (method-inline-lambda (first applicable-methods))
+                      `(aref *fast-methods* ,index))
+               ,@gensyms)))))))
 
 (defun specializer-type (specializer)
   (etypecase specializer
-    (eql-specializer `(eql ,(eql-specializer-object specializer)))
-    (class (class-name specializer))))
+    (eql-specializer
+     `(eql ,(eql-specializer-object specializer)))
+    (class
+     (class-name specializer))))
 
 (defun specializer-prototype (specializer)
   (etypecase specializer

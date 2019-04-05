@@ -3,7 +3,14 @@
 (defvar *seal-methods-eagerly* t)
 
 (defclass potentially-sealable-method (sealable-metaobject-mixin method)
-  ((%inline-lambda :initarg %inline-lambda :reader method-inline-lambda)))
+  ((%inline-lambda
+    :initform nil
+    :initarg inline-lambda
+    :reader method-inline-lambda)
+   (%specializer-profile
+    :initform (error "No specializer profile supplied.")
+    :initarg specializer-profile
+    :accessor method-specializer-profile)))
 
 (defmethod add-method :after ((gf generic-function) (sm potentially-sealable-method))
   (when (and *seal-methods-eagerly*
@@ -17,9 +24,7 @@
          (and (not specializing-p)
               (eq specializer (find-class 't)))))
    (method-specializers sm)
-   (generic-function-specializer-profile (method-generic-function sm))))
+   (method-specializer-profile sm)))
 
-(defmethod seal-metaobject ((sm potentially-sealable-method))
-  (if (metaobject-sealable-p sm)
-      (call-next-method)
-      (error "Attempt to seal a method with non-sealed specializers.")))
+(defmethod seal-metaobject :before ((sm potentially-sealable-method))
+  (mapc #'seal-class (method-specializers sm)))
