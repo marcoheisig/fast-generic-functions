@@ -1,8 +1,5 @@
 (in-package #:sealable-metaobjects)
 
-(defvar *fast-methods* (make-array 0 :adjustable t :fill-pointer 0))
-(declaim (type (vector t) *fast-methods*))
-
 (defmethod seal-metaobject :after
     ((sgf sealable-generic-function))
   (eval `(sb-c:defknown ,(generic-function-name sgf) * * () :overwrite-fndb-silently t))
@@ -26,6 +23,15 @@
         '()
         (apply #'alexandria:map-product #'list specializer-lists))))
 
+(defun make-effective-method-using-specializers (gf specializers)
+  (let ((applicable-methods
+          (compute-applicable-methods
+           gf
+           (mapcar #'specializer-prototype specializers))))
+    (let ((emf (sb-pcl::get-effective-method-function gf applicable-methods)))
+      (lambda (&rest args)
+        (sb-pcl::invoke-emf emf args)))))
+
 (defun make-deftransform (gf specializers)
   (with-accessors ((name generic-function-name)
                    (lambda-list generic-function-lambda-list)) gf
@@ -33,12 +39,7 @@
              (compute-applicable-methods
               gf
               (mapcar #'specializer-prototype specializers)))
-           (types (mapcar #'specializer-type specializers))
-           (index (vector-push-extend
-                   (let ((emf (sb-pcl::get-effective-method-function gf applicable-methods)))
-                     (lambda (&rest args)
-                       (sb-pcl::invoke-emf emf args)))
-                   *fast-methods*)))
+           (types (mapcar #'specializer-type specializers)))
       (assert (every #'method-sealed-p applicable-methods))
       `(sb-c:deftransform ,name ((&rest rest) (,@types &rest *))
          (let ((gensyms (loop for r in rest collect (gensym))))
@@ -48,7 +49,11 @@
                            (null (method-qualifiers (first applicable-methods)))
                            (method-inline-lambda (first applicable-methods)))
                       (method-inline-lambda (first applicable-methods))
-                      `(aref *fast-methods* ,index))
+                      `(load-time-value
+                        (make-effective-method-using-specializers
+                         #',(generic-function-name gf)
+                         (list
+                          ,@(mapcar #'specializer-load-form specializers)))))
                ,@gensyms)))))))
 
 (defun specializer-type (specializer)
@@ -62,3 +67,9 @@
   (etypecase specializer
     (eql-specializer (eql-specializer-object specializer))
     (class (class-prototype specializer))))
+
+(defun specializer-load-form (specializer)
+  (etypecase specializer
+    (eql-specializer `(make-instance 'eql-specializer
+                        :object ',(eql-specializer-object specializer)))
+    (class `(find-class ',(class-name specializer)))))

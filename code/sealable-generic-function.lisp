@@ -36,11 +36,8 @@
              (push value initargs)
              (push key initargs)))
       (extend-initargs 'specializer-profile (generic-function-specializer-profile sgf))
-      (when (= 1 (length
-                  (compute-applicable-methods
-                   #'make-method-lambda
-                   (list sgf psm lambda environment))))
-        (if (inlineable-method-lambda-p lambda environment)
-            (extend-initargs 'inline-lambda lambda)
-            (warn "The method body~% ~S~%is too hairy for method inlining." lambda)))
+      (cond ((inlineable-method-lambda-p lambda environment)
+             (extend-initargs 'inline-lambda lambda))
+            (t
+             (warn "The method body~% ~S~%is too hairy for method inlining." lambda)))
       (values method-lambda initargs))))
