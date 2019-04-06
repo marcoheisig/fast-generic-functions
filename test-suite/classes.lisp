@@ -13,5 +13,3 @@
   ()
   (:metaclass sealable-standard-class))
 
-(seal-class (find-class 'point))
-

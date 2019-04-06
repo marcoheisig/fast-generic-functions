@@ -1,5 +1,18 @@
 (in-package #:sealable-metaobjects-test-suite)
 
+;;; GENERIC-FIND
+
+(defmethod generic-find (elt (null null) &key (test #'eql))
+  (declare (ignore elt null test))
+  nil)
+
+(defmethod generic-find (elt (list cons) &key (test #'eql))
+  (loop for item in list
+        when (funcall test item elt) do (return item)))
+
+(defmethod generic-find (elt (vector vector) &key (test #'eql))
+  (cl:find elt vector :test test))
+
 ;;; GENERIC-BINARY-+
 
 (defmethod generic-binary-+ :around ((a number) (b number))
@@ -46,6 +59,7 @@
 (defmethod rest-args (a1 (a2 number) &rest rest)
   (+ a1 a2 (length rest)))
 
+(seal-generic-function #'generic-find)
 (seal-generic-function #'generic-binary-+)
 (seal-generic-function #'generic-binary-*)
 (seal-generic-function #'rest-args)
