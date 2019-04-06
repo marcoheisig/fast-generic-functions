@@ -39,5 +39,5 @@
       (cond ((inlineable-method-lambda-p lambda environment)
              (extend-initargs 'inline-lambda lambda))
             (t
-             (warn "The method body~% ~S~%is too hairy for method inlining." lambda)))
+             (debug-format "The method body~% ~S~%is too hairy for method inlining." lambda)))
       (values method-lambda initargs))))
