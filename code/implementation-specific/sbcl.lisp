@@ -73,7 +73,14 @@
 (defun specializer-prototype (specializer)
   (etypecase specializer
     (eql-specializer (eql-specializer-object specializer))
-    (class (class-prototype specializer))))
+    (class
+     (let ((prototype (class-prototype specializer)))
+       (cond ((eq (class-of prototype) specializer)
+              prototype)
+             ;; TODO - this is a gross hack for a problem that might
+             ;; invalidate the entire approach based on prototypes.
+             ((eq specializer (find-class 'list))
+              (cons nil nil)))))))
 
 (defun specializer-load-form (specializer)
   (etypecase specializer
