@@ -6,8 +6,7 @@
   (:method ((class class)) nil)
   (:method ((generic-function generic-function)) nil)
   (:method ((method method)) nil)
-  (:method ((built-in-class built-in-class)) t)
-  (:documentation ""))
+  (:method ((built-in-class built-in-class)) t))
 
 (defgeneric class-sealable-p (class)
   (:method ((class class))

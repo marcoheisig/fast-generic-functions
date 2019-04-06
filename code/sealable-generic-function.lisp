@@ -1,7 +1,5 @@
 (in-package #:sealable-metaobjects)
 
-(defvar *seal-generic-functions-eagerly* t)
-
 (defclass sealable-generic-function (sealable-metaobject-mixin generic-function)
   ((%specializer-profile
     :accessor generic-function-specializer-profile))
@@ -39,5 +37,5 @@
       (cond ((inlineable-method-lambda-p lambda environment)
              (extend-initargs 'inline-lambda lambda))
             (t
-             (debug-format "The method body~% ~S~%is too hairy for method inlining." lambda)))
+             (debug-format "~&The method body~% ~S~%is too hairy for method inlining." lambda)))
       (values method-lambda initargs))))

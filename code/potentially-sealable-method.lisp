@@ -1,7 +1,5 @@
 (in-package #:sealable-metaobjects)
 
-(defvar *seal-methods-eagerly* t)
-
 (defclass potentially-sealable-method (sealable-metaobject-mixin method)
   ((%inline-lambda
     :initform nil
@@ -11,11 +9,6 @@
     :initform (error "No specializer profile supplied.")
     :initarg specializer-profile
     :accessor method-specializer-profile)))
-
-(defmethod add-method :after ((gf generic-function) (sm potentially-sealable-method))
-  (when (and *seal-methods-eagerly*
-             (metaobject-sealable-p sm))
-    (seal-method sm)))
 
 (defmethod metaobject-sealable-p ((sm potentially-sealable-method))
   (every

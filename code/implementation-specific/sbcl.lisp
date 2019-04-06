@@ -56,7 +56,7 @@
                                 (list
                                  ,@(mapcar #'specializer-load-form specializers)))))
                       ,@gensyms))))
-           (debug-format "Creating inline lambda:~% ~S~%" inline-lambda)
+           (debug-format "~&Creating inline lambda:~% ~S~%" inline-lambda)
            inline-lambda)))))
 
 (defun specializer-type (specializer)

@@ -1,9 +1,7 @@
 (in-package #:sealable-metaobjects)
 
-(defvar *seal-classes-eagerly* t)
-
 (defclass sealable-class (sealable-metaobject-mixin class)
-  ((%seal-class-eagerly-p :initform *seal-classes-eagerly* :reader seal-class-eagerly-p)))
+  ())
 
 (defclass sealable-class-instance (t)
   ())
@@ -41,8 +39,4 @@
     (finalize-inheritance class))
   ;; A sealed class must have sealed superclasses.
   (mapc #'seal-class (rest (class-precedence-list class))))
-
-(defmethod finalize-inheritance :after ((class sealable-class))
-  (when (seal-class-eagerly-p class)
-    (seal-class class)))
 

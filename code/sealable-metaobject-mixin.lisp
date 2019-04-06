@@ -8,7 +8,7 @@
   t)
 
 (defmethod seal-metaobject ((metaobject sealable-metaobject-mixin))
-  (debug-format "Sealing the metaobject ~S~%" metaobject)
+  (debug-format "~&Sealing the metaobject ~S~%" metaobject)
   (setf (slot-value metaobject '%sealed-p) t))
 
 (defmethod seal-metaobject :around ((metaobject sealable-metaobject-mixin))

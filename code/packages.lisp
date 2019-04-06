@@ -3,9 +3,6 @@
 (defpackage #:sealable-metaobjects
   (:use #:closer-common-lisp)
   (:export
-   #:*seal-methods-eagerly*
-   #:*seal-classes-eagerly*
-   #:*seal-generic-functions-eagerly*
    #:define-sealable-generic-function
    #:generic-function-specializer-profile
 
