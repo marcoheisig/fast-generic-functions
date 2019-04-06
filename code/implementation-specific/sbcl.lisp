@@ -40,24 +40,24 @@
               gf
               (mapcar #'specializer-prototype specializers)))
            (types (mapcar #'specializer-type specializers)))
-      (assert (every #'method-sealed-p applicable-methods))
-      `(sb-c:deftransform ,name ((&rest rest) (,@types &rest *))
-         (let* ((gensyms (loop for r in rest collect (gensym)))
-                (inline-lambda
-                  `(lambda (,@gensyms)
-                     (funcall
-                      ,',(if (and (= 1 (length applicable-methods))
-                                  (null (method-qualifiers (first applicable-methods)))
-                                  (method-inline-lambda (first applicable-methods)))
-                             (method-inline-lambda (first applicable-methods))
-                             `(load-time-value
-                               (make-effective-method-using-specializers
-                                #',(generic-function-name gf)
-                                (list
-                                 ,@(mapcar #'specializer-load-form specializers)))))
-                      ,@gensyms))))
-           (debug-format "~&Creating inline lambda:~% ~S~%" inline-lambda)
-           inline-lambda)))))
+      (unless (null applicable-methods)
+        (assert (every #'method-sealed-p applicable-methods))
+        `(sb-c:deftransform ,name ((&rest rest) (,@types &rest *))
+           (let* ((gensyms (loop for r in rest collect (gensym)))
+                  (inline-lambda
+                    `(lambda (,@gensyms)
+                       (funcall
+                        ,',(if (and (every #'method-inline-lambda applicable-methods)
+                                    (notany #'method-qualifiers applicable-methods))
+                               (method-inline-lambda (first applicable-methods))
+                               `(load-time-value
+                                 (make-effective-method-using-specializers
+                                  #',(generic-function-name gf)
+                                  (list
+                                   ,@(mapcar #'specializer-load-form specializers)))))
+                        ,@gensyms))))
+             (debug-format "~&Creating inline lambda:~% ~S~%" inline-lambda)
+             inline-lambda))))))
 
 (defun specializer-type (specializer)
   (etypecase specializer
