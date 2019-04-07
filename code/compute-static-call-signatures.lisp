@@ -22,14 +22,15 @@
   (let* ((sealed-methods (remove-if-not #'method-sealed-p (generic-function-methods sgf)))
          (list-of-specializers (mapcar #'method-specializers sealed-methods))
          (static-call-signatures '()))
-    (map-types-and-prototypes
-     (lambda (types prototypes)
-       (push (make-instance 'static-call-signature
-               :types types
-               :prototypes prototypes)
-             static-call-signatures))
-     (apply #'mapcar #'list list-of-specializers)
-     (generic-function-specializer-profile sgf))
+    (unless (null list-of-specializers)
+      (map-types-and-prototypes
+       (lambda (types prototypes)
+         (push (make-instance 'static-call-signature
+                 :types types
+                 :prototypes prototypes)
+               static-call-signatures))
+       (apply #'mapcar #'list list-of-specializers)
+       (generic-function-specializer-profile sgf)))
     static-call-signatures))
 
 (defun map-types-and-prototypes (fn specializers-list specializer-profile)
@@ -55,15 +56,9 @@
 ;;; Reasoning About Specializer Specificity
 
 (defclass snode ()
-  ((%specializer
-    :initarg :specializer
-    :accessor snode-specializer)
-   (%direct-subspecializers
-    :initform '()
-    :accessor snode-direct-subspecializers)
-   (%direct-superspecializers
-    :initform '()
-    :accessor snode-direct-superspecializers)))
+  ((%specializer :initarg :specializer :accessor snode-specializer)
+   (%children :initform '() :accessor snode-children)
+   (%parents :initform '() :accessor snode-parents)))
 
 (defvar *snode-table*)
 
@@ -80,23 +75,9 @@
   (nth-value 1 (gethash specializer *snode-table*)))
 
 (defun snode-add-edge (super-snode sub-snode)
-  (pushnew super-snode (snode-direct-superspecializers sub-snode))
-  (pushnew sub-snode (snode-direct-subspecializers super-snode))
+  (pushnew super-snode (snode-parents sub-snode))
+  (pushnew sub-snode (snode-children super-snode))
   (values))
-
-(defun snode-type (snode)
-  (let ((stype (specializer-type (snode-specializer snode)))
-        (subspecializers (snode-direct-subspecializers snode)))
-    (if (null subspecializers)
-        stype
-        `(and ,stype
-              (not (or ,@(loop for subspecializer in subspecializers
-                               collect (specializer-type
-                                        (snode-specializer subspecializer)))))))))
-
-(defun snode-prototype (snode)
-  (specializer-prototype
-   (snode-specializer snode)))
 
 (defun type-prototype-pairs (specializers)
   (let ((*snode-table* (make-hash-table)))
@@ -114,7 +95,47 @@
                     (specializer-direct-superspecializers current)))))
       (mapc #'walk specializers specializers))
     ;; Finally, build all pairs.
-    (loop for snode being the hash-values of *snode-table*
-          collect
-          (list (snode-type snode)
-                (snode-prototype snode)))))
+    (let ((pairs '()))
+      (loop for snode being the hash-values of *snode-table* do
+        (multiple-value-bind (prototype prototype-p)
+            (snode-prototype snode)
+          (when prototype-p
+            (push (list (snode-type snode) prototype)
+                  pairs))))
+      pairs)))
+
+(defun snode-type (snode)
+  (let ((stype (specializer-type (snode-specializer snode)))
+        (subspecializers (snode-children snode)))
+    (if (null subspecializers)
+        stype
+        `(and ,stype
+              (not (or ,@(loop for subspecializer in subspecializers
+                               collect (specializer-type
+                                        (snode-specializer subspecializer)))))))))
+
+(defun snode-prototype (snode)
+  (non-colliding-prototype
+   (specializer-prototype (snode-specializer snode))
+   (loop for child in (snode-children snode)
+         collect
+         (specializer-type
+          (snode-specializer child)))))
+
+(defgeneric non-colliding-prototype (initial-prototype other-types))
+
+(defmethod non-colliding-prototype ((object t) other-types)
+  (loop for other-type in other-types do
+    (when (typep object other-type)
+      (return-from non-colliding-prototype (values nil nil))))
+  (values object t))
+
+(defmethod non-colliding-prototype ((number number) other-types)
+  (if (every #'eql-type-specifier-p other-types)
+      (loop (unless (find number other-types :test #'typep)
+              (return (values number t)))
+            (incf number))
+      (values nil nil)))
+
+(defun eql-type-specifier-p (type-specifier)
+  (typep type-specifier '(cons (eql eql) (cons t null))))
