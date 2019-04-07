@@ -21,7 +21,6 @@
            (prototypes (static-call-signature-prototypes static-call-signature))
            (applicable-methods (compute-applicable-methods gf prototypes)))
       (unless (null applicable-methods)
-        (assert (every #'method-sealed-p applicable-methods))
         (debug-format "~&Creating deftransform for ~S~{ ~S~}~%"
                       (generic-function-name gf) types)
         `(sb-c:deftransform ,name ((&rest rest) (,@types &rest *))

@@ -13,9 +13,9 @@
 (defmethod metaobject-sealable-p ((sm potentially-sealable-method))
   (every
    (lambda (specializer specializing-p)
-     (or (specializer-sealed-p specializer)
-         (and (not specializing-p)
-              (eq specializer (find-class 't)))))
+     (or (not specializing-p)
+         (and (specializer-sealed-p specializer)
+              (not (eq specializer (find-class 't))))))
    (method-specializers sm)
    (method-specializer-profile sm)))
 
