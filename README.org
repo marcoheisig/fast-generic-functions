@@ -29,26 +29,94 @@ These circumstances are:
    function SEAL-GENERIC-FUNCTION.
 
 3. This sealed generic function has at least one sealed method, i.e., a
-   method that is an instance of SEALABLE-METHOD that has previously been
-   passed to the function SEAL-METHOD.  Furthermore this generic function
-   has a specializer mask, that describes which of its mandatory arguments
-   may be subject to a specializer other than the class T.
+   method of type POTENTIALLY-SEALABLE-METHOD that specializes, on each
+   relevant argument, on a built-in or sealed class, or an eql specializer
+   whose object is an instance of a built-in or sealed class.
 
-4. It must be possible to determine, statically, the class of all arguments
-   that appear in a position where the specializer mask allows
-   specialization.  This class must be a sealed class, i.e., either an
-   instance of BUILT-IN-CLASS, or an instance of SEALABLE-CLASS that has
-   previously been passed to the function SEAL-CLASS.
+4. It must be possible to determine, statically, that the types of all
+   arguments in a specializing position uniquely determine the list of
+   applicable methods.
 
-5. All possible calls that have objects of the given classes (and, most
-   importantly, subclasses thereof) in a specializing position have the
-   same list of applicable methods.
+* Examples
+The following examples illustrate how sealable metaobjects can be used.
+Each example code can be evaluated as-is.  However, for actual use, we
+recommend the following practices:
 
-The correctness of this approach depends on restrictive definitions of
-SEALABLE-METHOD, SEALABLE-GENERIC-FUNCTION and SEALABLE-CLASS, which we
-will discuss now.
+- Sealable generic functions should be defined in a separate file that is
+  loaded early.  If this is not done, its methods may not use the correct
+  method-class.  (An alternative is to specify the method class of each
+  method explicitly).
+- Metaobject sealing should be the very last step when loading a project.
+  Ideally, all calls to SEAL-GENERIC-FUNCTION should be in a separate file
+  that ASDF loads last.  This way, sealing can also be disabled
+  conveniently, e.g., to measure whether sealing actually improves
+  performance (Which you should do!).
 
-* Restrictions on Sealable Metaobjects
+*** Generic Plus
+This first example shows how one can implement a generic version of =cl:+=,
+that is both extensible and fast in the common case.
+
+#+BEGIN_SRC lisp
+(sealable-metaobjects:define-sealable-generic-function generic-binary-+ (a b))
+
+(defmethod generic-binary-+ ((a number) (b number))
+  (+ a b))
+
+(defmethod generic-binary-+ ((a character) (b character))
+  (+ (char-code a)
+     (char-code b)))
+
+(sealable-metaobjects:seal-generic-function #'generic-binary-+)
+
+(defun generic-+ (&rest things)
+  (cond ((null things) 0)
+        ((null (rest things)) (first things))
+        (t (reduce #'generic-binary-+ things))))
+
+(define-compiler-macro generic-+ (&rest things)
+  (cond ((null things) 0)
+        ((null (rest things)) (first things))
+        (t
+         (flet ((symbolic-generic-binary-+ (a b)
+                  `(generic-binary-+ ,a ,b)))
+           (reduce #'symbolic-generic-binary-+ things)))))
+#+END_SRC
+
+You can quickly verify that this new operator is as efficient as =cl:+=:
+
+#+BEGIN_SRC lisp
+(defun triple-1 (x)
+  (declare (single-float x))
+  (+ x x x))
+
+(defun triple-2 (x)
+  (declare (single-float x))
+  (generic-+ x x x))
+
+(disassemble #'triple-1)
+
+(disassemble #'triple-2)
+#+END_SRC
+
+Yet, other than =cl:+=, this generic function can still be extended by the
+user:
+
+#+BEGIN_SRC lisp
+(defclass my-double-float ()
+  ((%value :initarg :value :reader my-double-float-value)))
+
+(defmethod generic-binary-+ ((a my-double-float) (b my-double-float))
+  (make-instance 'my-double-float
+    :value (+ (my-double-float-value a)
+              (my-double-float-value b))))
+
+(defun triple (x)
+  (generic-+ x x x))
+
+(my-double-float-value
+ (triple
+  (make-instance 'my-double-float :value 5.0d0)))
+#+END_SRC
 
 * Related Work
 - https://github.com/guicho271828/inlined-generic-function
