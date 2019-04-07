@@ -22,6 +22,7 @@
    #:specializer-type
    #:specializer-prototype
    #:specializer-load-form
+   #:specializer-direct-superspecializers
 
    #:define-sealable-generic-function
 

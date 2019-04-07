@@ -101,3 +101,11 @@
   (:method ((eql-specializer eql-specializer))
     `(make-instance 'eql-specializer
        :object ',(eql-specializer-object eql-specializer))))
+
+(defgeneric specializer-direct-superspecializers (specializer)
+  (:method ((class class))
+    (class-direct-superclasses class))
+  (:method ((eql-specializer eql-specializer))
+    (class-direct-superclasses
+     (class-of
+      (eql-specializer-object eql-specializer)))))
