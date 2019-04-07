@@ -15,7 +15,7 @@
    (:file "sealable-standard-class")
    (:file "potentially-sealable-standard-method")
    (:file "sealable-standard-generic-function")
-
+   (:file "compute-static-call-signatures")
    (:module "implementation-specific"
     :components
     ((:file "sbcl" :if-feature :sbcl)

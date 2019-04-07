@@ -3,9 +3,6 @@
 (defpackage #:sealable-metaobjects
   (:use #:closer-common-lisp)
   (:export
-   #:define-sealable-generic-function
-   #:generic-function-specializer-profile
-
    #:metaobject-sealable-p
    #:class-sealable-p
    #:generic-function-sealable-p
@@ -20,6 +17,13 @@
    #:seal-class
    #:seal-generic-function
    #:seal-method
+
+   #:generic-function-specializer-profile
+   #:specializer-type
+   #:specializer-prototype
+   #:specializer-load-form
+
+   #:define-sealable-generic-function
 
    #:sealable-class
    #:sealable-class-instance

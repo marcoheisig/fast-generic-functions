@@ -8,39 +8,18 @@
      (eval (make-deftransform sgf call-signature)))
    (compute-static-call-signatures sgf)))
 
-(defun compute-static-call-signatures (sgf)
-  (let* ((sealed-methods (remove-if-not #'method-sealed-p (generic-function-methods sgf)))
-         (list-of-specializers (mapcar #'method-specializers sealed-methods))
-         (specializer-lists
-           (mapcar
-            (lambda (specializer-list mask-bit)
-              (if mask-bit
-                  (remove (find-class 't)
-                          (remove-duplicates specializer-list :test #'eq))
-                  (list (find-class 't))))
-            (apply #'mapcar #'list list-of-specializers)
-            (generic-function-specializer-profile sgf))))
-    (if (null specializer-lists)
-        '()
-        (apply #'alexandria:map-product #'list specializer-lists))))
-
-(defun make-effective-method-using-specializers (gf specializers)
-  (let ((applicable-methods
-          (compute-applicable-methods
-           gf
-           (mapcar #'specializer-prototype specializers))))
+(defun make-effective-method-using-prototypes (gf prototypes)
+  (let ((applicable-methods (compute-applicable-methods gf prototypes)))
     (let ((emf (sb-pcl::get-effective-method-function gf applicable-methods)))
       (lambda (&rest args)
         (sb-pcl::invoke-emf emf args)))))
 
-(defun make-deftransform (gf specializers)
+(defun make-deftransform (gf static-call-signature)
   (with-accessors ((name generic-function-name)
                    (lambda-list generic-function-lambda-list)) gf
-    (let* ((applicable-methods
-             (compute-applicable-methods
-              gf
-              (mapcar #'specializer-prototype specializers)))
-           (types (mapcar #'specializer-type specializers)))
+    (let* ((types (static-call-signature-types static-call-signature))
+           (prototypes (static-call-signature-prototypes static-call-signature))
+           (applicable-methods (compute-applicable-methods gf prototypes)))
       (unless (null applicable-methods)
         (assert (every #'method-sealed-p applicable-methods))
         (debug-format "~&Creating deftransform for ~S~{ ~S~}~%"
@@ -55,35 +34,9 @@
                                       (notany #'method-qualifiers applicable-methods))
                                  (method-inline-lambda (first applicable-methods))
                                  `(load-time-value
-                                   (make-effective-method-using-specializers
+                                   (make-effective-method-using-prototypes
                                     #',(generic-function-name gf)
-                                    (list
-                                     ,@(mapcar #'specializer-load-form specializers)))))
+                                    ',prototypes)))
                           ,@gensyms)))))
              (debug-format "~&Creating inline lambda:~% ~S~%" inline-lambda)
              inline-lambda))))))
-
-(defun specializer-type (specializer)
-  (etypecase specializer
-    (eql-specializer
-     `(eql ,(eql-specializer-object specializer)))
-    (class
-     (class-name specializer))))
-
-(defun specializer-prototype (specializer)
-  (etypecase specializer
-    (eql-specializer (eql-specializer-object specializer))
-    (class
-     (let ((prototype (class-prototype specializer)))
-       (cond ((eq (class-of prototype) specializer)
-              prototype)
-             ;; TODO - this is a gross hack for a problem that might
-             ;; invalidate the entire approach based on prototypes.
-             ((eq specializer (find-class 'list))
-              (cons nil nil)))))))
-
-(defun specializer-load-form (specializer)
-  (etypecase specializer
-    (eql-specializer `(make-instance 'eql-specializer
-                        :object ',(eql-specializer-object specializer)))
-    (class `(find-class ',(class-name specializer)))))

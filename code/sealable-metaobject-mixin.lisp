@@ -8,7 +8,15 @@
   t)
 
 (defmethod seal-metaobject ((metaobject sealable-metaobject-mixin))
-  (debug-format "~&Sealing the metaobject ~S~%" metaobject)
+  (debug-format "~&Sealing ~S~%"
+                (etypecase metaobject
+                  (class (class-name metaobject))
+                  (generic-function (generic-function-name metaobject))
+                  (method (list* (if (method-generic-function metaobject)
+                                     (generic-function-name (method-generic-function metaobject))
+                                     metaobject)
+                                 (mapcar #'specializer-type (method-specializers metaobject))))
+                  (t metaobject)))
   (setf (slot-value metaobject '%sealed-p) t))
 
 (defmethod seal-metaobject :around ((metaobject sealable-metaobject-mixin))

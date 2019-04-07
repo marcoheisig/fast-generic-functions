@@ -67,8 +67,37 @@
      (class-of
       (eql-specializer-object eql-specializer)))))
 
-;;; Miscellaneous Accessors
+;;; Miscellaneous
 
 (defgeneric generic-function-specializer-profile (generic-function))
 
 (defgeneric method-inline-lambda (method))
+
+(defgeneric specializer-type (specializer)
+  (:method ((class class))
+    (class-name class))
+  (:method ((eql-specializer eql-specializer))
+    `(eql ,(eql-specializer-object eql-specializer))))
+
+(defgeneric specializer-prototype (specializer)
+  (:method ((class class))
+    (let ((prototype (class-prototype class)))
+      ;; Surprisingly, some implementations return a CLASS-PROTOTYPE that
+      ;; is not actually an instance of the given class.
+      (if (typep prototype class)
+          prototype
+          (cond ((eq class (find-class 'list))
+                 (load-time-value (cons nil nil)))
+                ((subtypep class 'array)
+                 (load-time-value (make-array '())))
+                (t (error "Cannot compute a class prototype for ~S. ~S"
+                          class prototype))))))
+  (:method ((eql-specializer eql-specializer))
+    (eql-specializer-object eql-specializer)))
+
+(defgeneric specializer-load-form (specializer)
+  (:method ((class class))
+    `(find-class ',(class-name class)))
+  (:method ((eql-specializer eql-specializer))
+    `(make-instance 'eql-specializer
+       :object ',(eql-specializer-object eql-specializer))))
