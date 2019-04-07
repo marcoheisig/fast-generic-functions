@@ -1,5 +1,5 @@
 (defsystem "sealable-metaobjects"
-  :depends-on ("closer-mop" "alexandria")
+  :depends-on ("closer-mop")
 
   :serial t
   :components
