@@ -1,6 +1,8 @@
 (defsystem "sealable-metaobjects"
   :depends-on ("closer-mop" "trivial-macroexpand-all")
 
+  :in-order-to ((test-op (load-op "sealable-metaobjects-test-suite")))
+
   :serial t
   :components
   ((:file "packages")
