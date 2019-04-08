@@ -25,14 +25,14 @@
       (call-next-method)))
   metaobject)
 
-(defmethod change-class :around
+(defmethod change-class
     ((metaobject sealable-metaobject-mixin) new-class-name &key &allow-other-keys)
   (cond ((metaobject-sealed-p metaobject)
          (warn "Attempt to change the class of the sealed metaobject ~S" metaobject)
          metaobject)
         (t (call-next-method))))
 
-(defmethod reinitialize-instance :around
+(defmethod reinitialize-instance
     ((metaobject sealable-metaobject-mixin) &key &allow-other-keys)
   (cond ((metaobject-sealed-p metaobject)
          (warn "Attempt to reinitialize the sealed metaobject ~S" metaobject)
