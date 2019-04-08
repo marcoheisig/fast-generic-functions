@@ -53,8 +53,7 @@ recommend the following practices:
   performance (Which you should do!).
 
 *** Generic Plus
-This first example shows how one can implement a generic version of =cl:+=,
-that is both extensible and fast in the common case.
+This example shows how one can implement a generic version of =cl:+=.
 
 #+BEGIN_SRC lisp
 (sealable-metaobjects:define-sealable-generic-function generic-binary-+ (a b))
@@ -98,8 +97,10 @@ You can quickly verify that this new operator is as efficient as =cl:+=:
 (disassemble #'triple-2)
 #+END_SRC
 
-Yet, other than =cl:+=, this generic function can still be extended by the
-user:
+Yet, other than =cl:+=, =generic-+= can be extended by the user, just like
+a regular generic function.  The only restriction is that new methods must
+not interfere with the behavior of methods that specialize on sealed types
+only.
 
 #+BEGIN_SRC lisp
 (defclass my-double-float ()
