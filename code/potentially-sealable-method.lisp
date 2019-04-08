@@ -14,8 +14,7 @@
   (every
    (lambda (specializer specializing-p)
      (or (not specializing-p)
-         (and (specializer-sealed-p specializer)
-              (not (eq specializer (find-class 't))))))
+         (specializer-sealed-p specializer)))
    (method-specializers sm)
    (method-specializer-profile sm)))
 
