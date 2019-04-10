@@ -8,34 +8,76 @@
      (eval (make-deftransform sgf call-signature)))
    (compute-static-call-signatures sgf)))
 
-(defun make-effective-method-using-prototypes (gf prototypes)
+(defun make-effective-method-using-prototypes (gf prototypes arity)
   (let ((applicable-methods (compute-applicable-methods gf prototypes)))
     (let ((emf (sb-pcl::get-effective-method-function gf applicable-methods)))
-      (lambda (&rest args)
-        (sb-pcl::invoke-emf emf args)))))
+      (typecase emf
+        (sb-pcl::fast-method-call
+         (let ((fn (sb-pcl::fast-method-call-function emf))
+               (pv (sb-pcl::fast-method-call-pv emf))
+               (nm (sb-pcl::fast-method-call-next-method-call emf)))
+           (declare (function fn))
+           (case arity
+             (0 (lambda  () (funcall fn pv nm)))
+             (1 (lambda  (a1) (funcall fn pv nm a1)))
+             (2 (lambda  (a1 a2) (funcall fn pv nm a1 a2)))
+             (3 (lambda  (a1 a2 a3) (funcall fn pv nm a1 a2 a3)))
+             (4 (lambda  (a1 a2 a3 a4) (funcall fn pv nm a1 a2 a3 a4)))
+             (5 (lambda  (a1 a2 a3 a4 a5) (funcall fn pv nm a1 a2 a3 a4 a5)))
+             (6 (lambda  (a1 a2 a3 a4 a5 a6) (funcall fn pv nm a1 a2 a3 a4 a5 a6)))
+             (7 (lambda  (a1 a2 a3 a4 a5 a6 a7) (funcall fn pv nm a1 a2 a3 a4 a5 a6 a7)))
+             (t (lambda (&rest args) (apply fn pv nm args))))))
+        (sb-pcl::method-call
+         (let ((fn (sb-pcl::method-call-function emf))
+               (nm (sb-pcl::method-call-call-method-args emf)))
+           (lambda (&rest args)
+             (apply fn args nm))))
+        (t
+         (lambda (&rest args)
+           (sb-pcl::invoke-emf emf args)))))))
 
-(defun make-deftransform (gf static-call-signature)
+(defun make-deftransform (generic-function static-call-signature)
   (with-accessors ((name generic-function-name)
-                   (lambda-list generic-function-lambda-list)) gf
-    (let* ((types (static-call-signature-types static-call-signature))
-           (prototypes (static-call-signature-prototypes static-call-signature))
-           (applicable-methods (compute-applicable-methods gf prototypes)))
-      (unless (null applicable-methods)
-        (debug-format "~&Creating deftransform for ~S~{ ~S~}~%"
-                      (generic-function-name gf) types)
-        `(sb-c:deftransform ,name ((&rest rest) (,@types &rest *))
-           (let* ((gensyms (loop for r in rest collect (gensym)))
-                  (inline-lambda
-                    `(lambda (,@gensyms)
-                       (block ,',(generic-function-name gf)
-                         (funcall
-                          ,',(if (and (every #'method-inline-lambda applicable-methods)
-                                      (notany #'method-qualifiers applicable-methods))
-                                 (method-inline-lambda (first applicable-methods))
-                                 `(load-time-value
-                                   (make-effective-method-using-prototypes
-                                    #',(generic-function-name gf)
-                                    ',prototypes)))
-                          ,@gensyms)))))
-             (debug-format "~&Creating inline lambda:~% ~S~%" inline-lambda)
-             inline-lambda))))))
+                   (lambda-list generic-function-lambda-list)) generic-function
+    (with-accessors ((types static-call-signature-types)
+                     (prototypes static-call-signature-prototypes)) static-call-signature
+      (debug-format "~&Creating deftransform for ~S~{ ~S~}~%" name types)
+      `(sb-c:deftransform ,name ((&rest rest) (,@types &rest *))
+         (let ((inline-lambda
+                 (generic-function-inline-lambda ',generic-function (length rest) ',prototypes)))
+           (debug-format "~&Creating inline lambda:~% ~S~%" inline-lambda)
+           inline-lambda)))))
+
+(defun effective-method-inline-method (effective-method)
+  (ecase (first effective-method)
+    ((let)
+     (let ((body (parse-body (rest (rest effective-method)))))
+       (when (= 1 (length body))
+         (effective-method-inline-method body))))
+    ((call-method)
+     (when (and (typep (second effective-method) 'potentially-sealable-method)
+                (method-inline-lambda (second effective-method)))
+       (second effective-method)))))
+
+(defmethod generic-function-inline-lambda
+    ((generic-function sealable-generic-function) arity prototypes)
+  (declare (optimize debug))
+  (let* ((gensyms (loop repeat arity collect (gensym)))
+         (applicable-methods (compute-applicable-methods generic-function prototypes))
+         (em (compute-effective-method
+              generic-function
+              (generic-function-method-combination generic-function)
+              applicable-methods))
+         (inline-method (effective-method-inline-method em)))
+    (if inline-method
+        `(lambda (,@gensyms)
+           (block ,(generic-function-name generic-function)
+             (funcall ,(method-inline-lambda inline-method) ,@gensyms)))
+        `(lambda (,@gensyms)
+           (funcall
+            (load-time-value
+             (make-effective-method-using-prototypes
+              #',(generic-function-name generic-function)
+              ',prototypes
+              ',arity))
+            ,@gensyms)))))

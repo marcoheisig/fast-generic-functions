@@ -33,7 +33,7 @@
       (generic-find item list)))
 
 (defun generic-+-user-1 (x y z)
-  (declare (single-float x y z))
+  (declare (double-float x y z))
   (generic-+ x y z))
 
 (defun generic-+-user-2 (p)
