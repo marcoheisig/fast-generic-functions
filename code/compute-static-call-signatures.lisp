@@ -115,27 +115,6 @@
                                         (snode-specializer subspecializer)))))))))
 
 (defun snode-prototype (snode)
-  (non-colliding-prototype
-   (specializer-prototype (snode-specializer snode))
-   (loop for child in (snode-children snode)
-         collect
-         (specializer-type
-          (snode-specializer child)))))
-
-(defgeneric non-colliding-prototype (initial-prototype other-types))
-
-(defmethod non-colliding-prototype ((object t) other-types)
-  (loop for other-type in other-types do
-    (when (typep object other-type)
-      (return-from non-colliding-prototype (values nil nil))))
-  (values object t))
-
-(defmethod non-colliding-prototype ((number number) other-types)
-  (if (every #'eql-type-specifier-p other-types)
-      (loop (unless (find number other-types :test #'typep)
-              (return (values number t)))
-            (incf number))
-      (values nil nil)))
-
-(defun eql-type-specifier-p (type-specifier)
-  (typep type-specifier '(cons (eql eql) (cons t null))))
+  (specializer-prototype
+   (snode-specializer snode)
+   (mapcar #'snode-specializer (snode-children snode))))

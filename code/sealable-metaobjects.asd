@@ -7,9 +7,10 @@
   :components
   ((:file "packages")
    (:file "debug")
+   (:file "generic-functions")
    (:file "null-lexical-environment-p")
    (:file "inlineable-method-lambda-p")
-   (:file "generic-functions")
+   (:file "specializer-prototype")
    (:file "sealable-metaobject-mixin")
    (:file "sealable-class")
    (:file "potentially-sealable-method")

@@ -48,16 +48,23 @@
            (debug-format "~&Creating inline lambda:~% ~S~%" inline-lambda)
            inline-lambda)))))
 
-(defun effective-method-inline-method (effective-method)
-  (ecase (first effective-method)
-    ((let)
-     (let ((body (parse-body (rest (rest effective-method)))))
-       (when (= 1 (length body))
-         (effective-method-inline-method body))))
-    ((call-method)
-     (when (and (typep (second effective-method) 'potentially-sealable-method)
-                (method-inline-lambda (second effective-method)))
-       (second effective-method)))))
+(defun sb-pcl-symbol-p (symbol)
+  (not
+   (null
+    (nth-value 1 (find-symbol (symbol-name symbol)
+                              (find-package "SB-PCL"))))))
+
+(defun effective-method-inline-lambda (effective-method)
+  (cond ((atom effective-method) nil)
+        ((and (eq (first effective-method) 'let)
+              (let ((variables (mapcar #'first (second effective-method))))
+                (every #'sb-pcl-symbol-p variables))
+              (sb-pcl-symbol-p (first (third effective-method))))
+         (effective-method-inline-lambda (fourth effective-method)))
+        ((and (eq (first effective-method) 'call-method)
+              (typep (second effective-method) 'potentially-sealable-method))
+         (method-inline-lambda (second effective-method)))
+        (t nil)))
 
 (defmethod generic-function-inline-lambda
     ((generic-function sealable-generic-function) arity prototypes)
@@ -68,11 +75,11 @@
               generic-function
               (generic-function-method-combination generic-function)
               applicable-methods))
-         (inline-method (effective-method-inline-method em)))
-    (if inline-method
+         (inline-lambda (effective-method-inline-lambda em)))
+    (if inline-lambda
         `(lambda (,@gensyms)
            (block ,(generic-function-name generic-function)
-             (funcall ,(method-inline-lambda inline-method) ,@gensyms)))
+             (funcall ,inline-lambda ,@gensyms)))
         `(lambda (,@gensyms)
            (funcall
             (load-time-value

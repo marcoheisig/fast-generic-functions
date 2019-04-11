@@ -89,28 +89,28 @@
   (:method ((eql-specializer eql-specializer))
     `(eql ,(eql-specializer-object eql-specializer))))
 
-(defgeneric specializer-prototype (specializer)
-  (:method ((class class))
-    (let ((prototype (class-prototype class)))
-      ;; Surprisingly, some implementations return a CLASS-PROTOTYPE that
-      ;; is not actually an instance of the given class.
-      (if (typep prototype class)
-          prototype
-          (cond ((eq class (find-class 'list))
-                 (load-time-value (cons nil nil)))
-                ((subtypep class 'array)
-                 (load-time-value (make-array '())))
-                (t (error "Cannot compute a class prototype for ~S. ~S"
-                          class prototype))))))
-  (:method ((eql-specializer eql-specializer))
-    (eql-specializer-object eql-specializer)))
+(defgeneric specializer-prototype (specializer &optional excluded-specializers)
+  (:documentation
+   "Returns an object that is of the type indicated by SPECIALIZER, but not
+of any of the types indicated the optionally supplied
+EXCLUDED-SPECIALIZERS.  Returns a secondary value of T if such an object
+could be determined, and NIL if no such object was found.
 
-(defgeneric specializer-load-form (specializer)
-  (:method ((class class))
-    `(find-class ',(class-name class)))
-  (:method ((eql-specializer eql-specializer))
-    `(make-instance 'eql-specializer
-       :object ',(eql-specializer-object eql-specializer))))
+Examples:
+ (specializer-prototype
+   (find-class 'double-float))
+ => 5.0d0, T
+
+ (specializer-prototype
+   (find-class 'double-float)
+   (list (intern-eql-specializer 5.0d0)))
+ => 6.0d0, T
+
+ (specializer-prototype
+   (find-class 'real)
+   (list (find-class 'rational) (find-class 'float)))
+ => NIL, NIL
+"))
 
 (defgeneric specializer-direct-superspecializers (specializer)
   (:method ((class class))
