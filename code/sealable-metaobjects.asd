@@ -1,4 +1,5 @@
 (defsystem "sealable-metaobjects"
+  :description "A CLOSsy way to trade genericity for performance."
   :depends-on ("closer-mop" "trivial-macroexpand-all")
 
   :in-order-to ((test-op (load-op "sealable-metaobjects-test-suite")))
