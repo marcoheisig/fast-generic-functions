@@ -1,5 +1,7 @@
 (defsystem "sealable-metaobjects"
+  :author "Marco Heisig <marco.heisig@fau.de>"
   :description "A CLOSsy way to trade genericity for performance."
+  :license "MIT"
   :depends-on ("closer-mop" "trivial-macroexpand-all")
 
   :in-order-to ((test-op (load-op "sealable-metaobjects-test-suite")))
