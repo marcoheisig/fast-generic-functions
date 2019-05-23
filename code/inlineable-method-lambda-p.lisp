@@ -100,8 +100,7 @@
 
 (defun parse-body (body)
   (let ((documentation nil)
-        (declarations '())
-        (forms '()))
+        (declarations '()))
     (labels ((process-body (body)
                (let ((item (first body)))
                  (cond ((stringp item)
