@@ -2,11 +2,7 @@
 
 ;;; GENERIC-FIND
 
-(defmethod generic-find (elt (null null) &key (test #'eql))
-  (declare (ignore elt null test))
-  nil)
-
-(defmethod generic-find (elt (list cons) &key (test #'eql))
+(defmethod generic-find (elt (list list) &key (test #'eql))
   (loop for item in list
         when (funcall test item elt) do (return item)))
 

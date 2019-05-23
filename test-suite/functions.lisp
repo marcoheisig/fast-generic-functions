@@ -28,9 +28,7 @@
 
 (defun generic-find-user (item list)
   (declare (list list))
-  (if (null list)
-      (generic-find item list)
-      (generic-find item list)))
+  (generic-find item list))
 
 (defun generic-+-user-1 (x y z)
   (declare (double-float x y z))
