@@ -122,4 +122,5 @@ only.
 * Related Work
 - https://github.com/guicho271828/inlined-generic-function
 - https://opendylan.org/books/drm/Define_Sealed_Domain
-- Generic Function Sealing by Paul Khuong
+- https://github.com/markcox80/specialization-store
+- Generic Function Sealing by Paul Khuong (unpublished)
