@@ -40,8 +40,8 @@
     (labels ((visit-class (class)
                (unless (gethash class visited-classes)
                  (setf (gethash class visited-classes) t)
-                 ;; Surprisingly, some implementations return a
-                 ;; CLASS-PROTOTYPE that is not an instance of the given
+                 ;; Surprisingly, some implementations don't always return
+                 ;; a CLASS-PROTOTYPE that is an instance of the given
                  ;; class.
                  (let ((prototype (class-prototype class)))
                    (when (typep prototype class)
@@ -59,28 +59,43 @@
 (register-class-prototype '(.prototype.))
 (register-class-prototype nil)
 
-;; Register vector and array prototypes.
-(loop for dimensions in '(() (2) (2 2)) do
-  (loop for bits from 1 to 64 do
-    (register-class-prototype (make-array dimensions :element-type `(signed-byte ,bits)))
-    (register-class-prototype (make-array dimensions :element-type `(unsigned-byte ,bits))))
-  (loop for type in '(short-float single-float double-float long-float base-char character t) do
-    (register-class-prototype (make-array dimensions :element-type type))))
+(defparameter *array-element-types*
+  (remove-duplicates
+   (mapcar #'upgraded-array-element-type
+           (append '(short-float single-float double-float long-float base-char character t)
+                   (loop for bits from 1 to 64
+                         collect `(unsigned-byte ,bits)
+                         collect `(signed-byte ,bits))))
+   :test #'equal))
 
-;; Register integer prototypes.
-(loop for integer in '(0 3 19 1337 1338 91676) do
+;; Register vector and array prototypes.
+(loop for adjustable in '(nil t) do
+  (loop for fill-pointer in '(nil t) do
+    (loop for dimensions in '(() (2) (2 2)) do
+      (loop for element-type in *array-element-types* do
+        (let ((storage-vector (make-array (reduce #'* dimensions) :element-type element-type)))
+          (loop for displaced-to in (list nil storage-vector) do
+            (register-class-prototype
+             (make-array dimensions
+                         :adjustable adjustable
+                         :fill-pointer (and (= 1 (length dimensions)) fill-pointer)
+                         :element-type element-type
+                         :displaced-to displaced-to))))))))
+
+;; Register integer and rational prototypes.
+(loop for integer in '(19 1337 1338 91676) do
   (register-class-prototype (+ integer))
   (register-class-prototype (- integer)))
-(loop for bits = 1 then (* bits 2) until (>= bits 64) do
-  (register-class-prototype (1+ (+ (expt 2 bits))))
-  (register-class-prototype (1- (+ (expt 2 bits))))
-  (register-class-prototype (+ (expt 2 bits)))
-  (register-class-prototype (- (expt 2 bits)))
-  (register-class-prototype (1- (- (expt 2 bits))))
-  (register-class-prototype (1+ (- (expt 2 bits)))))
+(loop for bits = 1 then (* bits 2) until (>= bits 512)
+      for value = (expt 2 bits) do
+        (loop for value in (list (1+ value) value (1- value)) do
+          (register-class-prototype value)
+          (register-class-prototype (- value))
+          (register-class-prototype (/ value 17))))
 
 ;; Register float and complex float prototypes.
 (register-class-prototype pi)
+(register-class-prototype (- pi))
 (loop for base in '(-0.7L0 -0.1L0 -0.0L0 +0.0L0 +0.1L0 +0.7L0) do
   (loop for fp-type in '(short-float single-float double-float long-float) do
     (loop for exponent in '(1 2 3 5) do
