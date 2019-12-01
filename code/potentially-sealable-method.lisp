@@ -10,13 +10,13 @@
     :initarg specializer-profile
     :accessor method-specializer-profile)))
 
-(defmethod metaobject-sealable-p ((sm potentially-sealable-method))
+(defmethod metaobject-sealable-p ((psm potentially-sealable-method))
   (every
    (lambda (specializer specializing-p)
      (or (not specializing-p)
          (specializer-sealed-p specializer)))
-   (method-specializers sm)
-   (method-specializer-profile sm)))
+   (method-specializers psm)
+   (method-specializer-profile psm)))
 
-(defmethod seal-metaobject :before ((sm potentially-sealable-method))
-  (mapc #'seal-class (method-specializers sm)))
+(defmethod seal-metaobject :before ((psm potentially-sealable-method))
+  (mapc #'seal-class (method-specializers psm)))

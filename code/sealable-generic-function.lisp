@@ -9,10 +9,6 @@
   (mapc #'seal-method (generic-function-methods sgf)))
 
 (defmethod add-method :before ((sgf sealable-generic-function) (sm potentially-sealable-method))
-  (when (and (generic-function-sealed-p sgf)
-             (method-sealed-p sm))
-    (error "~@<Must not add further sealed methods to the already sealed ~
-               generic function ~S~:@>" sgf))
   (loop for boolean in (generic-function-specializer-profile sgf)
         for specializer in (method-specializers sm)
         for argument-number from 0 do
