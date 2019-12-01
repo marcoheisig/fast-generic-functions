@@ -66,6 +66,11 @@
          (method-inline-lambda (second effective-method)))
         (t nil)))
 
+(defun block-name (function-name)
+  (etypecase function-name
+    (symbol function-name)
+    ((cons (eql setf) (cons symbol null)) (second function-name))))
+
 (defmethod generic-function-inline-lambda
     ((generic-function sealable-generic-function) arity prototypes)
   (declare (optimize debug))
@@ -78,7 +83,7 @@
          (inline-lambda (effective-method-inline-lambda em)))
     (if inline-lambda
         `(lambda (,@gensyms)
-           (block ,(generic-function-name generic-function)
+           (block ,(block-name (generic-function-name generic-function))
              (funcall ,inline-lambda ,@gensyms)))
         `(lambda (,@gensyms)
            (funcall
