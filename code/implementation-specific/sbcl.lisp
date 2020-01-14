@@ -27,11 +27,6 @@
              (6 (lambda  (a1 a2 a3 a4 a5 a6) (funcall fn pv nm a1 a2 a3 a4 a5 a6)))
              (7 (lambda  (a1 a2 a3 a4 a5 a6 a7) (funcall fn pv nm a1 a2 a3 a4 a5 a6 a7)))
              (t (lambda (&rest args) (apply fn pv nm args))))))
-        (sb-pcl::method-call
-         (let ((fn (sb-pcl::method-call-function emf))
-               (nm (sb-pcl::method-call-call-method-args emf)))
-           (lambda (&rest args)
-             (apply fn args nm))))
         (t
          (lambda (&rest args)
            (sb-pcl::invoke-emf emf args)))))))
