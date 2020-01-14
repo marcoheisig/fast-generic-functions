@@ -54,7 +54,7 @@
             t))
        ;; Binding forms.
        ((lambda)
-        (and (second form)
+        (and (consp (rest form))
              (inlineable-lambda-list-p (second form))
              (inlineable-body-p (rest (rest form)))))
        ((let let*)
