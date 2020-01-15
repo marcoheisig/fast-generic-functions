@@ -144,4 +144,5 @@ This example illustrates how one can implement a fast, generic version of =cl:fi
 - https://github.com/guicho271828/inlined-generic-function
 - https://opendylan.org/books/drm/Define_Sealed_Domain
 - https://github.com/markcox80/specialization-store
+- http://home.pipeline.com/~hbaker1/CLOStrophobia.html
 - Generic Function Sealing by Paul Khuong (unpublished)
