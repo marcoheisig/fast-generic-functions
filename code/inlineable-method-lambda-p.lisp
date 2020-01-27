@@ -15,16 +15,6 @@
 ;;;
 ;;; - Any occurrence of an unknown special form.
 
-(defun keyword-lambda-list-p (lambda-list)
-  (let ((key-pos (position '&key lambda-list))
-        (aok-pos (position '&allow-other-keys lambda-list))
-        (rest-pos (position '&rest lambda-list)))
-    (and key-pos
-         (or (not aok-pos)
-             (> aok-pos (1+ key-pos)))
-         (or (not rest-pos)
-             (> rest-pos (1+ key-pos))))))
-
 (defun inlineable-method-lambda-p (lambda-expression environment)
   (and
    ;; We cannot inline a potential closure.
