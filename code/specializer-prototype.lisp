@@ -96,9 +96,30 @@
 ;; Register float and complex float prototypes.
 (register-class-prototype pi)
 (register-class-prototype (- pi))
+(register-class-prototype (exp 1S0))
+(register-class-prototype (exp 1F0))
+(register-class-prototype (exp 1D0))
+(register-class-prototype (exp 1L0))
+(mapcar #'register-class-prototype
+        (list most-positive-short-float
+              most-positive-single-float
+              most-positive-double-float
+              most-positive-long-float
+              most-negative-short-float
+              most-negative-single-float
+              most-negative-double-float
+              most-positive-long-float
+              short-float-epsilon
+              single-float-epsilon
+              double-float-epsilon
+              long-float-epsilon
+              short-float-negative-epsilon
+              single-float-negative-epsilon
+              double-float-negative-epsilon
+              long-float-negative-epsilon))
 (loop for base in '(-0.7L0 -0.1L0 -0.0L0 +0.0L0 +0.1L0 +0.7L0) do
   (loop for fp-type in '(short-float single-float double-float long-float) do
-    (loop for exponent in '(1 2 3 5) do
+    (loop for exponent in '(1 2 3 5 7 23 99) do
       (let ((float (scale-float (coerce base fp-type) exponent)))
         (register-class-prototype float)
         (register-class-prototype (complex (float 0 float) float))))))
