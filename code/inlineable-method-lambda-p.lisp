@@ -34,7 +34,8 @@
    (eq (first lambda-expression) 'lambda)
    ;; If the body contains crazy things like LOAD-TIME-VALUE or non-trivial
    ;; calls to CALL-NEXT-METHOD, we give up.
-   (inlineable-form-p (sb-cltl2:macroexpand-all lambda-expression))))
+   (inlineable-form-p
+    (trivial-macroexpand-all:macroexpand-all lambda-expression environment))))
 
 ;;; This following code is essentially a very poor code walker.
 
