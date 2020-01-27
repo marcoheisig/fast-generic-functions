@@ -2,5 +2,5 @@
 
 (defun null-lexical-environement-p (environment)
   (declare (ignorable environment))
-  nil
-  #+sbcl(sb-c::null-lexenv-p environment))
+  (or (null environment)
+      #+sbcl (sb-c::null-lexenv-p environment)))
