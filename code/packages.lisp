@@ -13,7 +13,6 @@
    #:generic-function-sealed-p
    #:method-sealed-p
 
-   #:seal-metaobject
    #:seal-class
    #:seal-generic-function
    #:seal-method

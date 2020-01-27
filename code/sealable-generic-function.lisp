@@ -5,6 +5,9 @@
     :accessor generic-function-specializer-profile))
   (:metaclass funcallable-standard-class))
 
+(defmethod seal-generic-function ((sealable-generic-function sealable-generic-function))
+  (seal-metaobject sealable-generic-function))
+
 (defmethod seal-metaobject :before ((sgf sealable-generic-function))
   (mapc #'seal-method (generic-function-methods sgf)))
 

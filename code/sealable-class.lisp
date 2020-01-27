@@ -10,7 +10,7 @@
 
 (defmethod initialize-instance :after ((instance sealable-class) &key &allow-other-keys)
   ;; We cannot use typep here, because the inheritance of INSTANCE is not
-  ;; yet finalized.  So we use a custom replacement instead.
+  ;; yet finalized.
   (unless (inherits instance (find-class 'sealable-class-instance))
     (error "Sealable classes must inherit the class SEALABLE-CLASS-INSTANCE.")))
 
@@ -23,6 +23,9 @@
                    (return-from inherits t))
                  (mapc #'scan (class-direct-superclasses class)))))
       (scan class))))
+
+(defmethod seal-class ((sealable-class sealable-class))
+  (seal-metaobject sealable-class))
 
 (defmethod seal-metaobject :before ((class sealable-class-instance))
   (seal-class (class-of class)))

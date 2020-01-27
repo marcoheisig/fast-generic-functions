@@ -11,6 +11,7 @@
   ((:file "packages")
    (:file "debug")
    (:file "generic-functions")
+   (:file "built-in-class")
    (:file "null-lexical-environment-p")
    (:file "inlineable-method-lambda-p")
    (:file "specializer-prototype")

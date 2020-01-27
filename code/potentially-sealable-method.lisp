@@ -18,5 +18,11 @@
    (method-specializers psm)
    (method-specializer-profile psm)))
 
+(defmethod seal-method ((psm potentially-sealable-method))
+  (seal-metaobject psm))
+
 (defmethod seal-metaobject :before ((psm potentially-sealable-method))
-  (mapc #'seal-class (method-specializers psm)))
+  (loop for specializer in (method-specializers psm)
+        for specializing-p in (method-specializer-profile psm) do
+          (when specializing-p
+            (seal-class specializer))))

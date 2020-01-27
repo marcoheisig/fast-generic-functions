@@ -5,8 +5,7 @@
 (defgeneric metaobject-sealable-p (metaobject)
   (:method ((class class)) nil)
   (:method ((generic-function generic-function)) nil)
-  (:method ((method method)) nil)
-  (:method ((built-in-class built-in-class)) t))
+  (:method ((method method)) nil))
 
 (defgeneric class-sealable-p (class)
   (:method ((class class))
@@ -25,18 +24,7 @@
 (defgeneric metaobject-sealed-p (metaobject)
   (:method ((class class)) nil)
   (:method ((generic-function generic-function)) nil)
-  (:method ((method method)) nil)
-  (:method ((built-in-class built-in-class))
-    (every #'class-sealed-p (class-direct-subclasses built-in-class)))
-  ;; Cache sealed-p values of built-in-classes.
-  (:method :around ((built-in-class built-in-class))
-    (let ((table (load-time-value (make-hash-table :test #'eq))))
-      (multiple-value-bind (value present-p)
-          (gethash built-in-class table)
-        (if present-p
-            value
-            (setf (gethash built-in-class table)
-                  (call-next-method)))))))
+  (:method ((method method)) nil))
 
 (defgeneric class-sealed-p (class)
   (:method ((class class))
@@ -50,6 +38,13 @@
   (:method ((method method))
     (metaobject-sealed-p method)))
 
+(defgeneric specializer-sealed-p (specializer)
+  (:method ((class class)) nil)
+  (:method ((eql-specializer eql-specializer))
+    (specializer-sealed-p
+     (class-of
+      (eql-specializer-object eql-specializer)))))
+
 ;;; Sealing of metaobjects
 
 (defgeneric seal-metaobject (metaobject)
@@ -57,25 +52,11 @@
     (declare (ignore object))
     (values)))
 
-(defgeneric seal-class (class)
-  (:method ((class class))
-    (seal-metaobject class)))
+(defgeneric seal-class (class))
 
-(defgeneric seal-generic-function (generic-function)
-  (:method ((generic-function generic-function))
-    (seal-metaobject generic-function)))
+(defgeneric seal-generic-function (generic-function))
 
-(defgeneric seal-method (method)
-  (:method ((method method))
-    (seal-metaobject method)))
-
-(defgeneric specializer-sealed-p (specializer)
-  (:method ((class class)) nil)
-  (:method ((built-in-class built-in-class)) t)
-  (:method ((eql-specializer eql-specializer))
-    (specializer-sealed-p
-     (class-of
-      (eql-specializer-object eql-specializer)))))
+(defgeneric seal-method (method))
 
 ;;; Miscellaneous
 
