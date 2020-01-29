@@ -9,6 +9,7 @@
   :serial t
   :components
   ((:file "packages")
+   (:file "utilities")
    (:file "debug")
    (:file "generic-functions")
    (:file "built-in-class")
