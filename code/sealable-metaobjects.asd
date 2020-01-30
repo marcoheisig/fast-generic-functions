@@ -9,8 +9,9 @@
   :serial t
   :components
   ((:file "packages")
-   (:file "utilities")
    (:file "debug")
+   (:file "utilities")
+   (:file "lambda-lists")
    (:file "generic-functions")
    (:file "built-in-class")
    (:file "null-lexical-environment-p")

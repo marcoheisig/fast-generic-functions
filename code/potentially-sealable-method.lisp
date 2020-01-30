@@ -51,3 +51,6 @@
         (trivial-macroexpand-all:macroexpand-all form environment))
       (subseq body end-of-declarations)))))
 
+(defun declare-form-p (form)
+  (and (consp form)
+       (eql (car form) 'declare)))
