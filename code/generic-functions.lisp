@@ -62,7 +62,7 @@
 
 (defgeneric generic-function-specializer-profile (generic-function))
 
-(defgeneric method-inline-lambda (method))
+(defgeneric method-body (method))
 
 (defgeneric specializer-type (specializer)
   (:method ((class class))

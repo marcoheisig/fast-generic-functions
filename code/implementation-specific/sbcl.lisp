@@ -83,17 +83,12 @@
          (em (compute-effective-method
               generic-function
               (generic-function-method-combination generic-function)
-              applicable-methods))
-         (inline-lambda (effective-method-inline-lambda em)))
-    (if inline-lambda
-        `(lambda (,@gensyms)
-           (block ,(block-name (generic-function-name generic-function))
-             (funcall ,inline-lambda ,@gensyms)))
-        `(lambda (,@gensyms)
-           (funcall
-            (load-time-value
-             (make-effective-method-using-prototypes
-              #',(generic-function-name generic-function)
-              ',prototypes
-              ',arity))
-            ,@gensyms)))))
+              applicable-methods)))
+    `(lambda (,@gensyms)
+       (funcall
+        (load-time-value
+         (make-effective-method-using-prototypes
+          #',(generic-function-name generic-function)
+          ',prototypes
+          ',arity))
+        ,@gensyms))))

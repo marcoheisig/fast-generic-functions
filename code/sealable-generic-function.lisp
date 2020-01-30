@@ -17,10 +17,10 @@
         for argument-number from 0 do
           (unless (or boolean
                       (eq specializer (find-class 't)))
-            (error "~@<The argument ~D of the method ~S has a specializer ~
-                      (~S) in position where its specializer profile ~
-                      forbids specialization.~:@>"
-                   argument-number sm specializer))))
+            (error "~@<The ~:R argument of the method ~S has the specializer ~
+                      ~S, but the generic function's specializer profile ~
+                      forbids specialization in the ~:R argument.~:@>"
+                   argument-number sm specializer argument-number))))
 
 (defmethod make-method-lambda :around
     ((sgf sealable-generic-function)
@@ -29,12 +29,7 @@
      environment)
   (multiple-value-bind (method-lambda initargs)
       (call-next-method)
-    (flet ((extend-initargs (key value)
-             (push value initargs)
-             (push key initargs)))
-      (extend-initargs 'specializer-profile (generic-function-specializer-profile sgf))
-      (cond ((inlineable-method-lambda-p lambda environment)
-             (extend-initargs 'inline-lambda lambda))
-            (t
-             (debug-format "~&The method body~% ~S~%is too hairy for method inlining." lambda)))
-      (values method-lambda initargs))))
+    (values
+     method-lambda
+     (list* '.specializer-profile. (generic-function-specializer-profile sgf)
+            initargs))))
