@@ -39,7 +39,7 @@
        (setf (generic-function-specializer-profile #',function-name)
              ',specializer-profile)
        ,@(loop for (nil . defmethod-body) in methods
-               collect `(defmethod ,@defmethod-body)))))
+               collect `(defmethod ,function-name ,@defmethod-body)))))
 
 (defun starts-with (item)
   (lambda (sequence)
