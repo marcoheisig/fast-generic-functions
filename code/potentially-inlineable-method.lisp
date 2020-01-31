@@ -13,10 +13,8 @@
      environment)
   (multiple-value-bind (method-lambda initargs)
       (call-next-method)
-    (if (not (method-sealable-p pim))
-        (values method-lambda initargs)
-        (values
-         method-lambda
-         (list* '.inline-lambda.
-                (compute-method-inline-lambda pim lambda environment)
-                initargs)))))
+    (values
+     method-lambda
+     (list* '.inline-lambda.
+            (compute-method-inline-lambda pim lambda environment)
+            initargs))))

@@ -1,7 +1,8 @@
 (in-package #:sealable-metaobjects-test-suite)
 
 (define-sealable-generic-function generic-find (item sequence &key test)
-  (:argument-precedence-order sequence))
+  (:argument-precedence-order sequence)
+  (:generic-function-class inlineable-standard-generic-function))
 
 (define-sealable-generic-function generic-binary-+ (a b)
   (:generic-function-class inlineable-standard-generic-function))

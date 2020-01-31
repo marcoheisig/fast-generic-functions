@@ -26,11 +26,13 @@
    (:file "sealable-standard-class")
    (:file "potentially-sealable-standard-method")
    (:file "sealable-standard-generic-function")
+   (:file "define-sealable-generic-function")
 
    ;; Inlineable Metaobjects.
    (:file "inlineable-generic-function")
    (:file "inlineable-standard-generic-function")
    (:file "potentially-inlineable-method")
+   (:file "potentially-inlineable-standard-method")
    (:file "inline-lambda")
 
    ;; The Magic.

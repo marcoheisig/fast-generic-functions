@@ -210,20 +210,20 @@ Can parse all but specialized lambda lists.
          :variable item
          :keyword (intern (symbol-name item) :keyword)))
       ((cons t null)
-       (multiple-value-bind (variable keyword)
+       (multiple-value-bind (keyword variable)
            (parse-keyword-var (first item))
          (make-instance 'keyword-info
            :variable variable
            :keyword keyword)))
       ((cons t (cons t null))
-       (multiple-value-bind (variable keyword)
+       (multiple-value-bind (keyword variable)
            (parse-keyword-var (first item))
          (make-instance 'keyword-info
            :variable variable
            :keyword keyword
            :initform (second item))))
       ((cons t (cons t (cons local-variable null)))
-       (multiple-value-bind (variable keyword)
+       (multiple-value-bind (keyword variable)
            (parse-keyword-var (first item))
          (make-instance 'keyword-info
            :variable variable

@@ -1,23 +1,29 @@
 (in-package #:sealable-metaobjects)
 
-(defmethod compute-method-inline-lambda (method lambda environment)
-  )
-
-(defun extract-method-body (lambda environment)
-  (assert (eql (first lambda) 'lambda))
-  (assert (listp (second lambda)))
-  (let* ((body (cddr lambda))
-         (end-of-declarations (position-if-not #'declare-form-p body)))
-    (append
-     (subseq body 0 end-of-declarations)
-     (mapcar
-      (lambda (form)
-        (trivial-macroexpand-all:macroexpand-all form environment))
-      (subseq body end-of-declarations)))))
-
-(defun declare-form-p (form)
-  (and (consp form)
-       (eql (car form) 'declare)))
+(defmethod compute-method-inline-lambda
+    ((method potentially-inlineable-method) lambda environment)
+  (destructuring-bind (lambda-symbol lambda-list &rest body) lambda
+    (assert (eql lambda-symbol 'lambda))
+    (multiple-value-bind (required optional rest-var keyword allow-other-keys-p auxiliary)
+        (parse-ordinary-lambda-list lambda-list)
+      (declare (ignore allow-other-keys-p))
+      (let ((variables '()))
+        (dolist (info required)
+          (push (required-info-variable info) variables))
+        (dolist (info optional)
+          (push (optional-info-variable info) variables)
+          (when (optional-info-suppliedp info)
+            (push (optional-info-suppliedp info) variables)))
+        (unless (null rest-var)
+          (push rest-var variables))
+        (dolist (info keyword)
+          (push (keyword-info-variable info) variables)
+          (when (keyword-info-suppliedp info)
+            (push (keyword-info-suppliedp info) variables)))
+        `(lambda ,(append
+                   (reverse variables)
+                   (unparse-ordinary-lambda-list '() '() nil '() nil auxiliary))
+           ,@body)))))
 
 (defmethod compute-generic-function-inline-lambda
     ((igf inlineable-generic-function) applicable-methods)
