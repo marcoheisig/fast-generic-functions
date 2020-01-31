@@ -16,5 +16,5 @@
     (values
      method-lambda
      (list* '.inline-lambda.
-            (compute-method-inline-lambda pim lambda environment)
+            (compute-method-inline-lambda gf pim lambda environment)
             initargs))))

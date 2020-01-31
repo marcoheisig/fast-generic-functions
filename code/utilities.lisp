@@ -1,5 +1,9 @@
 (in-package #:sealable-metaobjects)
 
+(defun starts-with (item)
+  (lambda (sequence)
+    (eql (elt sequence 0) item)))
+
 (defun block-name (function-name)
   (etypecase function-name
     ((and symbol (not null)) function-name)

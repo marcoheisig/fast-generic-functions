@@ -33,7 +33,3 @@
              ',specializer-profile)
        ,@(loop for (nil . defmethod-body) in methods
                collect `(defmethod ,function-name ,@defmethod-body)))))
-
-(defun starts-with (item)
-  (lambda (sequence)
-    (eql (elt sequence 0) item)))

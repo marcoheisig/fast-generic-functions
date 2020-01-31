@@ -101,6 +101,6 @@ Examples:
      (class-of
       (eql-specializer-object eql-specializer)))))
 
-(defgeneric compute-method-inline-lambda (method lambda environment))
+(defgeneric compute-method-inline-lambda (generic-function method lambda environment))
 
 (defgeneric compute-generic-function-inline-lambda (generic-function applicable-methods))

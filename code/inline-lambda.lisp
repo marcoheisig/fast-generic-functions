@@ -1,7 +1,10 @@
 (in-package #:sealable-metaobjects)
 
 (defmethod compute-method-inline-lambda
-    ((method potentially-inlineable-method) lambda environment)
+    ((generic-function inlineable-generic-function)
+     (method potentially-inlineable-method)
+     lambda
+     environment)
   (destructuring-bind (lambda-symbol lambda-list &rest body) lambda
     (assert (eql lambda-symbol 'lambda))
     (multiple-value-bind (required optional rest-var keyword allow-other-keys-p auxiliary)
@@ -20,10 +23,14 @@
           (push (keyword-info-variable info) variables)
           (when (keyword-info-suppliedp info)
             (push (keyword-info-suppliedp info) variables)))
-        `(lambda ,(append
-                   (reverse variables)
-                   (unparse-ordinary-lambda-list '() '() nil '() nil auxiliary))
-           ,@body)))))
+        (trivial-macroexpand-all:macroexpand-all
+         `(lambda ,(append
+                    (reverse variables)
+                    (unparse-ordinary-lambda-list '() '() nil '() nil auxiliary))
+            ,@(subseq body 0 (position-if-not (starts-with 'declare) body))
+            (block ,(block-name (generic-function-name generic-function))
+              ,@(subseq body (position-if-not (starts-with 'declare) body))))
+         environment)))))
 
 (defmethod compute-generic-function-inline-lambda
     ((igf inlineable-generic-function) applicable-methods)
