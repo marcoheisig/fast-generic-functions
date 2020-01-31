@@ -100,3 +100,7 @@ Examples:
     (class-direct-superclasses
      (class-of
       (eql-specializer-object eql-specializer)))))
+
+(defgeneric compute-method-inline-lambda (method lambda environment))
+
+(defgeneric compute-generic-function-inline-lambda (generic-function applicable-methods))

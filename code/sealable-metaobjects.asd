@@ -13,18 +13,27 @@
    (:file "utilities")
    (:file "lambda-lists")
    (:file "generic-functions")
-   (:file "built-in-class")
    (:file "null-lexical-environment-p")
-   (:file "inlineable-method-lambda-p")
    (:file "specializer-prototype")
+
+   ;; Sealable Metaobjects.
+   (:file "built-in-class")
    (:file "sealable-metaobject-mixin")
    (:file "sealable-class")
    (:file "potentially-sealable-method")
    (:file "sealable-generic-function")
+   (:file "compute-static-call-signatures")
    (:file "sealable-standard-class")
    (:file "potentially-sealable-standard-method")
    (:file "sealable-standard-generic-function")
-   (:file "compute-static-call-signatures")
+
+   ;; Inlineable Metaobjects.
+   (:file "inlineable-generic-function")
+   (:file "inlineable-standard-generic-function")
+   (:file "potentially-inlineable-method")
+   (:file "inline-lambda")
+
+   ;; The Magic.
    (:module "implementation-specific"
     :components
     ((:file "sbcl" :if-feature :sbcl)

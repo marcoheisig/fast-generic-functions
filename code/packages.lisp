@@ -27,6 +27,8 @@
    #:sealable-class
    #:sealable-class-instance
    #:sealable-generic-function
+   #:inlineable-generic-function
+   #:inlineable-standard-generic-function
    #:sealable-method
    #:sealable-standard-class
    #:sealable-standard-class-instance
