@@ -27,8 +27,8 @@
    (%suppliedp
     :initarg :suppliedp
     :reader optional-info-suppliedp
-    :type local-variable
-    :initform (gensym "SUPPLIEDP"))))
+    :type (or null local-variable)
+    :initform nil)))
 
 (defclass keyword-info ()
   ((%keyword
@@ -48,8 +48,8 @@
    (%suppliedp
     :initarg :suppliedp
     :reader keyword-info-suppliedp
-    :type local-variable
-    :initform (gensym "SUPPLIEDP"))))
+    :type (or null local-variable)
+    :initform nil)))
 
 (defclass auxiliary-info ()
   ((%variable
@@ -324,29 +324,29 @@ Can parse all but specialized lambda lists.
      (mapcar #'anonymize-optional-info optional)
      (if (null rest-var)
          nil
-         (gensym (symbol-name rest-var)))
+         (gensymify rest-var))
      (mapcar #'anonymize-keyword-info keyword)
      allow-other-keys-p
      (mapcar #'anonymize-auxiliary-info auxiliary))))
 
 (defun anonymize-required-info (info)
   (make-instance 'required-info
-    :variable (gensym (symbol-name (required-info-variable info)))))
+    :variable (gensymify (required-info-variable info))))
 
 (defun anonymize-optional-info (info)
   (make-instance 'optional-info
-    :variable (gensym (symbol-name (optional-info-variable info)))
+    :variable (gensymify (optional-info-variable info))
     :initform (optional-info-initform info)
-    :suppliedp (gensym (symbol-name (optional-info-suppliedp info)))))
+    :suppliedp (gensymify "SUPPLIEDP")))
 
 (defun anonymize-keyword-info (info)
   (make-instance 'keyword-info
-    :variable (gensym (symbol-name (keyword-info-variable info)))
+    :variable (gensymify (keyword-info-variable info))
     :keyword (keyword-info-keyword info)
     :initform (keyword-info-initform info)
-    :suppliedp (gensym (symbol-name (keyword-info-suppliedp info)))))
+    :suppliedp (gensymify "SUPPLIEDP")))
 
 (defun anonymize-auxiliary-info (info)
   (make-instance 'auxiliary-info
-    :variable (gensym (symbol-name (auxiliary-info-variable info)))
+    :variable (gensymify (auxiliary-info-variable info))
     :initform (auxiliary-info-initform info)))
