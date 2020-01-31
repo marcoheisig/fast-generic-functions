@@ -77,13 +77,7 @@
 
 (defmethod generic-function-inline-lambda
     ((generic-function sealable-generic-function) arity prototypes)
-  (declare (optimize debug))
-  (let* ((gensyms (loop repeat arity collect (gensym)))
-         (applicable-methods (compute-applicable-methods generic-function prototypes))
-         (em (compute-effective-method
-              generic-function
-              (generic-function-method-combination generic-function)
-              applicable-methods)))
+  (let* ((gensyms (loop repeat arity collect (gensym))))
     `(lambda (,@gensyms)
        (funcall
         (load-time-value
@@ -92,3 +86,9 @@
           ',prototypes
           ',arity))
         ,@gensyms))))
+
+(defmethod generic-function-inline-lambda
+    ((generic-function inlineable-generic-function) arity prototypes)
+  (compute-generic-function-inline-lambda
+   generic-function
+   (compute-applicable-methods generic-function prototypes)))

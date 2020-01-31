@@ -23,14 +23,17 @@
           (push (keyword-info-variable info) variables)
           (when (keyword-info-suppliedp info)
             (push (keyword-info-suppliedp info) variables)))
-        (trivial-macroexpand-all:macroexpand-all
-         `(lambda ,(append
-                    (reverse variables)
-                    (unparse-ordinary-lambda-list '() '() nil '() nil auxiliary))
-            ,@(subseq body 0 (position-if-not (starts-with 'declare) body))
-            (block ,(block-name (generic-function-name generic-function))
-              ,@(subseq body (position-if-not (starts-with 'declare) body))))
-         environment)))))
+        (let ((augmented-lambda-list
+                (append
+                 (reverse variables)
+                 (unparse-ordinary-lambda-list '() '() nil '() nil auxiliary))))
+          (trivial-macroexpand-all:macroexpand-all
+           `(lambda ,augmented-lambda-list
+              (declare (ignorable ,@(lambda-list-variables augmented-lambda-list)))
+              ,@(subseq body 0 (position-if-not (starts-with 'declare) body))
+              (block ,(block-name (generic-function-name generic-function))
+                ,@(subseq body (position-if-not (starts-with 'declare) body))))
+           environment))))))
 
 (defmethod compute-generic-function-inline-lambda
     ((igf inlineable-generic-function) applicable-methods)
@@ -52,17 +55,19 @@
              (unparse-ordinary-lambda-list
               required optional rest-var keyword allow-other-keys-p '()))))
       ;; Create the inline lambda.
-      `(lambda ,anonymized-lambda-list
-         (let ((.gf. #',(generic-function-name igf)))
-           (declare (ignorable .gf.))
-           #+sbcl(declare (sb-ext:disable-package-locks common-lisp:call-method))
-           #+sbcl(declare (sb-ext:disable-package-locks common-lisp:make-method))
-           ,(wrap-in-call-method-macrolet
-             (compute-effective-method
-              igf
-              (generic-function-method-combination igf)
-              applicable-methods)
-             anonymized-lambda-list))))))
+      (trivial-macroexpand-all:macroexpand-all
+       `(lambda ,anonymized-lambda-list
+          (declare (ignorable ,@(lambda-list-variables anonymized-lambda-list)))
+          (let ((.gf. #',(generic-function-name igf)))
+            (declare (ignorable .gf.))
+            #+sbcl(declare (sb-ext:disable-package-locks common-lisp:call-method))
+            #+sbcl(declare (sb-ext:disable-package-locks common-lisp:make-method))
+            ,(wrap-in-call-method-macrolet
+              (compute-effective-method
+               igf
+               (generic-function-method-combination igf)
+               applicable-methods)
+              anonymized-lambda-list)))))))
 
 (defun wrap-in-call-method-macrolet (form lambda-list)
   `(macrolet ((call-method (method &optional next-methods)
@@ -71,7 +76,7 @@
                  next-methods)))
      ,form))
 
-(defun wrap-in-next-methods (form arguments next-methods)
+(defun wrap-in-next-methods (form next-methods)
   (if (null next-methods)
       `(flet ((next-method-p () nil)
               (call-next-method ()
@@ -81,18 +86,17 @@
       (wrap-in-next-methods
        `(flet ((next-method-p () t)
                (call-next-method ()
-                 ,(first next-methods)))
+                 (call-method ,(first next-methods) ,(rest next-methods))))
           (declare (ignorable #'next-method-p #'call-next-method))
           ,form)
-       arguments (rest next-methods))))
+       (rest next-methods))))
 
 (defun call-inlineable-method (method lambda-list)
   (cond ((and (consp method)
               (eql (first method) 'make-method))
          (assert (null (rest (rest method))))
          (second method))
-        ((and (typep method 'potentially-inlineable-method)
-              (method-sealed-p method))
+        ((and (typep method 'potentially-inlineable-method))
          (multiple-value-bind (g-required g-optional g-rest-var g-keyword)
              (parse-ordinary-lambda-list lambda-list)
            (multiple-value-bind (m-required m-optional m-rest-var m-keyword)
@@ -109,20 +113,20 @@
                ,@(loop for g-info in g-optional
                        for m-info in m-optional
                        append
-                       (if (null (optional-info-suppliedp m-optional))
-                           `(,(optional-info-variable g-optional))
-                           `(,(optional-info-variable g-optional)
-                             ,(optional-info-suppliedp g-optional))))
+                       (if (null (optional-info-suppliedp m-info))
+                           `(,(optional-info-variable g-info))
+                           `(,(optional-info-variable g-info)
+                             ,(optional-info-suppliedp g-info))))
                ,@(if (null m-rest-var)
                      `()
-                     `(,m-rest-var))
+                     `(,g-rest-var))
                ,@(loop for m-info in m-keyword
                        for g-info = (find (keyword-info-keyword m-info) g-keyword
                                           :key #'keyword-info-keyword)
                        append
-                       (if (null (keyword-info-suppliedp m-optional))
-                           `(,(keyword-info-variable g-optional))
-                           `(,(keyword-info-variable g-optional)
-                             ,(keyword-info-suppliedp g-optional))))))))
+                       (if (null (keyword-info-suppliedp m-info))
+                           `(,(keyword-info-variable g-info))
+                           `(,(keyword-info-variable g-info)
+                             ,(keyword-info-suppliedp g-info))))))))
         (t
          (error "Cannot turn ~S into an inline method call." method))))

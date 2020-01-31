@@ -274,7 +274,7 @@ Can parse all but specialized lambda lists.
            (lambda (info)
              (list (optional-info-variable info)
                    (optional-info-initform info)
-                   (optional-info-suppliedp info)))
+                   (or (optional-info-suppliedp info) (gensym))))
            optional))))
 
 (defun unparse-keyword (keyword allow-other-keys-p)
@@ -287,7 +287,7 @@ Can parse all but specialized lambda lists.
              (list (list (keyword-info-keyword info)
                          (keyword-info-variable info))
                    (keyword-info-initform info)
-                   (keyword-info-suppliedp info)))
+                   (or (keyword-info-suppliedp info) (gensym))))
            keyword)
         ,@(if allow-other-keys-p
               '(&allow-other-keys)
@@ -307,10 +307,6 @@ Can parse all but specialized lambda lists.
              (list (auxiliary-info-variable info)
                    (auxiliary-info-initform info)))
            auxiliary))))
-
-(defun normalize-ordinary-lambda-list (lambda-list)
-  (multiple-value-call #'unparse-ordinary-lambda-list
-    (parse-ordinary-lambda-list lambda-list)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -350,3 +346,32 @@ Can parse all but specialized lambda lists.
   (make-instance 'auxiliary-info
     :variable (gensymify (auxiliary-info-variable info))
     :initform (auxiliary-info-initform info)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Miscellaneous
+
+(defun normalize-ordinary-lambda-list (lambda-list)
+  (multiple-value-call #'unparse-ordinary-lambda-list
+    (parse-ordinary-lambda-list lambda-list)))
+
+(defun lambda-list-variables (lambda-list)
+  (multiple-value-bind (required optional rest-var keyword allow-other-keys-p auxiliary)
+      (parse-ordinary-lambda-list lambda-list)
+    (declare (ignore allow-other-keys-p))
+    (let ((variables '()))
+      (dolist (info required)
+        (push (required-info-variable info) variables))
+      (dolist (info optional)
+        (push (optional-info-variable info) variables)
+        (when (optional-info-suppliedp info)
+          (push (optional-info-suppliedp info) variables)))
+      (unless (null rest-var)
+        (push rest-var variables))
+      (dolist (info keyword)
+        (push (keyword-info-variable info) variables)
+        (when (keyword-info-suppliedp info)
+          (push (keyword-info-suppliedp info) variables)))
+      (dolist (info auxiliary)
+        (push (auxiliary-info-variable info) variables))
+      (nreverse variables))))
