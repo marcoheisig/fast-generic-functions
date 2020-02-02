@@ -62,12 +62,22 @@
             (declare (ignorable .gf.))
             #+sbcl(declare (sb-ext:disable-package-locks common-lisp:call-method))
             #+sbcl(declare (sb-ext:disable-package-locks common-lisp:make-method))
-            ,(wrap-in-call-method-macrolet
-              (compute-effective-method
-               igf
-               (generic-function-method-combination igf)
-               applicable-methods)
-              anonymized-lambda-list)))))))
+            #+sbcl(declare (sb-ext:disable-package-locks sb-pcl::check-applicable-keywords))
+            (macrolet
+                ;; SBCL introduces explicit keyword argument checking into
+                ;; the effective method.  Since we do our own checking, we
+                ;; can safely disable it.  However, we touch the relevant
+                ;; variables to prevent unused variable warnings.
+                (#+sbcl
+                 (sb-pcl::check-applicable-keywords (&rest args)
+                   (declare (ignore args))
+                   `(progn sb-pcl::.valid-keys. sb-pcl::.keyargs-start. (values))))
+              ,(wrap-in-call-method-macrolet
+                (compute-effective-method
+                 igf
+                 (generic-function-method-combination igf)
+                 applicable-methods)
+                anonymized-lambda-list))))))))
 
 (defun wrap-in-call-method-macrolet (form lambda-list)
   `(macrolet ((call-method (method &optional next-methods)
