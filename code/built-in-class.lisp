@@ -1,6 +1,6 @@
 (in-package #:sealable-metaobjects)
 
-;;; Ensure that built-in classes are treated like sealed classes.
+;;; Ensure that built-in classes are treated as sealed classes.
 
 (defmethod metaobject-sealable-p ((built-in-class built-in-class))
   (declare (ignore built-in-class))

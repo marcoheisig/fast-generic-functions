@@ -38,7 +38,8 @@
    ;; The Magic.
    (:module "sbcl" :if-feature :sbcl
     :components
-    ((:file "inlining")))
+    ((:file "system-class")
+     (:file "inlining")))
    (:module "default" :if-feature (:not (:or :sbcl))
     :components
     ())))
