@@ -36,7 +36,9 @@
    (:file "inline-lambda")
 
    ;; The Magic.
-   (:module "implementation-specific"
+   (:module "sbcl" :if-feature :sbcl
     :components
-    ((:file "sbcl" :if-feature :sbcl)
-     (:file "default" :if-feature (:not (:or :sbcl)))))))
+    ((:file "inlining")))
+   (:module "default" :if-feature (:not (:or :sbcl))
+    :components
+    ())))
