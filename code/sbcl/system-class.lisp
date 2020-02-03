@@ -7,17 +7,7 @@
   t)
 
 (defmethod metaobject-sealed-p ((system-class sb-pcl:system-class))
-  (every #'class-sealed-p (class-direct-subclasses system-class)))
-
-;;; Cache sealed-p values of system-classes.
-(defmethod metaobject-sealed-p :around ((system-class sb-pcl:system-class))
-  (let ((table (load-time-value (make-hash-table :test #'eq))))
-    (multiple-value-bind (value present-p)
-        (gethash system-class table)
-      (if present-p
-          value
-          (setf (gethash system-class table)
-                (call-next-method))))))
+  t)
 
 (defmethod seal-class ((system-class sb-pcl:system-class))
   (declare (ignore system-class))

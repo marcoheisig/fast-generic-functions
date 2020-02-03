@@ -48,9 +48,10 @@
 ;;; Sealing of metaobjects
 
 (defgeneric seal-metaobject (metaobject)
-  (:method ((object t))
-    (declare (ignore object))
-    (values)))
+  (:method :around ((metaobject t))
+    (when (metaobject-sealable-p metaobject)
+      (call-next-method))
+    metaobject))
 
 (defgeneric seal-class (class))
 
