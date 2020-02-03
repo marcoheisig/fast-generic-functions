@@ -77,20 +77,56 @@
                  igf
                  (generic-function-method-combination igf)
                  applicable-methods)
-                anonymized-lambda-list))))))))
+                anonymized-lambda-list
+                (or (class-name (generic-function-method-class igf))
+                    (find-class 'potentially-inlineable-method))))))))))
 
-(defun wrap-in-call-method-macrolet (form lambda-list)
+(defun wrap-in-call-method-macrolet (form lambda-list method-class)
   `(macrolet ((call-method (method &optional next-methods)
-                (wrap-in-next-methods
-                 (call-inlineable-method method ',lambda-list)
-                 next-methods)))
+                (expand-call-method
+                 method
+                 next-methods
+                 ',lambda-list
+                 ',method-class)))
      ,form))
 
-(defun wrap-in-next-methods (form next-methods)
+(defun expand-call-method (method next-methods lambda-list method-class)
+  (wrap-in-next-methods
+   (call-inlineable-method
+    (coerce-to-method method lambda-list method-class)
+    lambda-list)
+   next-methods
+   method-class))
+
+(defun coerce-to-method (method lambda-list method-class)
+  (cond ((typep method 'potentially-inlineable-method)
+         method)
+        ((and (consp method)
+              (eql (car method) 'make-method)
+              (null (cddr method)))
+         (make-instance method-class
+           :lambda-list lambda-list
+           :specializers (make-list (length (parse-ordinary-lambda-list lambda-list))
+                                    :initial-element (find-class 't))
+           :qualifiers '()
+           :function #'values
+           '.specializer-profile. '()
+           '.inline-lambda.
+           `(lambda ,lambda-list
+              (declare (ignorable ,@(lambda-list-variables lambda-list)))
+              ,(second method))))
+        (t
+         (error "Cannot turn ~S into an inlineable method."
+                method))))
+
+(defun wrap-in-next-methods (form next-methods method-class)
   (if (null next-methods)
       `(flet ((next-method-p () nil)
               (call-next-method ()
-                (no-next-method .gf. (sb-pcl:class-prototype 'standard-method))))
+                (no-next-method
+                 .gf.
+                 (sb-pcl:class-prototype
+                  (find-class ',method-class)))))
          (declare (ignorable #'next-method-p #'call-next-method))
          ,form)
       (wrap-in-next-methods
@@ -99,44 +135,46 @@
                  (call-method ,(first next-methods) ,(rest next-methods))))
           (declare (ignorable #'next-method-p #'call-next-method))
           ,form)
-       (rest next-methods))))
+       (rest next-methods)
+       method-class)))
 
 (defun call-inlineable-method (method lambda-list)
-  (cond ((and (consp method)
-              (eql (first method) 'make-method))
-         (assert (null (rest (rest method))))
-         (second method))
-        ((and (typep method 'potentially-inlineable-method))
-         (multiple-value-bind (g-required g-optional g-rest-var g-keyword)
-             (parse-ordinary-lambda-list lambda-list)
-           (multiple-value-bind (m-required m-optional m-rest-var m-keyword)
-               (parse-ordinary-lambda-list (method-lambda-list method))
-             (assert (= (length g-required)
-                        (length m-required)))
-             (assert (= (length g-optional)
-                        (length m-optional)))
-             (when (null g-rest-var)
-               (assert (null m-rest-var)))
-             `(funcall
-               ,(method-inline-lambda method)
-               ,@(mapcar #'required-info-variable g-required)
-               ,@(loop for g-info in g-optional
-                       for m-info in m-optional
-                       append
-                       (if (null (optional-info-suppliedp m-info))
-                           `(,(optional-info-variable g-info))
-                           `(,(optional-info-variable g-info)
-                             ,(optional-info-suppliedp g-info))))
-               ,@(if (null m-rest-var)
-                     `()
-                     `(,g-rest-var))
-               ,@(loop for m-info in m-keyword
-                       for g-info = (find (keyword-info-keyword m-info) g-keyword
-                                          :key #'keyword-info-keyword)
-                       append
-                       (if (null (keyword-info-suppliedp m-info))
-                           `(,(keyword-info-variable g-info))
-                           `(,(keyword-info-variable g-info)
-                             ,(keyword-info-suppliedp g-info))))))))
-        (t
-         (error "Cannot turn ~S into an inline method call." method))))
+  (multiple-value-bind (g-required g-optional g-rest-var g-keyword)
+      (parse-ordinary-lambda-list lambda-list)
+    (multiple-value-bind (m-required m-optional m-rest-var m-keyword)
+        (parse-ordinary-lambda-list (method-lambda-list method))
+      ;; Assert that the method has arguments that are congruent to those
+      ;; of the corresponding generic function.
+      (assert (or (= (length g-required)
+                     (length m-required))))
+      (assert (= (length g-optional)
+                 (length m-optional)))
+      (when (null g-rest-var)
+        (assert (null m-rest-var)))
+      `(funcall
+        ,(method-inline-lambda method)
+        ,@(mapcar #'required-info-variable g-required)
+        ,@(loop for g-info in g-optional
+                for m-info in m-optional
+                append
+                (let ((initform
+                        `(if ,(optional-info-suppliedp g-info)
+                             ,(optional-info-variable g-info)
+                             ,(optional-info-initform m-info))))
+                  (if (null (optional-info-suppliedp m-info))
+                      `(,initform)
+                      `(,initform ,(optional-info-suppliedp g-info)))))
+        ,@(if (null m-rest-var)
+              `()
+              `(,g-rest-var))
+        ,@(loop for m-info in m-keyword
+                for g-info = (find (keyword-info-keyword m-info) g-keyword
+                                   :key #'keyword-info-keyword)
+                append
+                (let ((initform
+                        `(if ,(keyword-info-suppliedp g-info)
+                             ,(keyword-info-variable g-info)
+                             ,(keyword-info-initform m-info))))
+                  (if (null (keyword-info-suppliedp m-info))
+                      `(,initform)
+                      `(,initform ,(keyword-info-suppliedp g-info)))))))))

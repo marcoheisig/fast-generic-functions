@@ -24,8 +24,7 @@
      (compute-static-call-signatures sgf))))
 
 (defun make-deftransform (generic-function static-call-signature)
-  (with-accessors ((name generic-function-name)
-                   (lambda-list generic-function-lambda-list)) generic-function
+  (with-accessors ((name generic-function-name)) generic-function
     (with-accessors ((types static-call-signature-types)
                      (prototypes static-call-signature-prototypes)) static-call-signature
       (debug-format "~&Creating deftransform for ~S~{ ~S~}~%" name types)
