@@ -56,7 +56,8 @@ recommend the following practices:
 This example shows how one can implement a generic version of =cl:+=.
 
 #+BEGIN_SRC lisp
-(sealable-metaobjects:define-sealable-generic-function generic-binary-+ (a b))
+(sealable-metaobjects:define-sealable-generic-function generic-binary-+ (a b)
+  (:generic-function-class sealable-metaobjects:inlineable-standard-generic-function))
 
 (defmethod generic-binary-+ ((a number) (b number))
   (+ a b))
@@ -92,8 +93,8 @@ You can quickly verify that this new operator is as efficient as =cl:+=:
   (declare (single-float x))
   (generic-+ x x x))
 
+;;; Both functions should compile to the same assembler code.
 (disassemble #'triple-1)
-
 (disassemble #'triple-2)
 #+END_SRC
 
@@ -123,20 +124,24 @@ only.
 This example illustrates how one can implement a fast, generic version of =cl:find=.
 
 #+BEGIN_SRC lisp
-(define-sealable-generic-function generic-find (item sequence &key test)
+(sealable-metaobjects:define-sealable-generic-function generic-find (item sequence &key test)
   ;; Only allow specialization on SEQUENCE, and not on ITEM.
   (:argument-precedence-order sequence))
 
 (defmethod generic-find (elt (list list) &key (test #'eql))
-  (loop for item in list
-        when (funcall test item elt) do (return item)))
+  (and (member elt list :test test)
+       t))
 
 (defmethod generic-find (elt (vector vector) &key (test #'eql))
   (cl:find elt vector :test test))
 
+(sealable-metaobjects:seal-generic-function #'generic-find)
+
 (defun small-prime-p (x)
   (generic-find x '(2 3 5 7 11)))
 
+;; The call to GENERIC-FIND should have been replaced by a direct call to
+;; the appropriate effective method.
 (disassemble #'small-prime-p)
 #+END_SRC
 
