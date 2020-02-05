@@ -9,10 +9,5 @@
 (defmethod metaobject-sealed-p ((system-class sb-pcl:system-class))
   t)
 
-(defmethod seal-class ((system-class sb-pcl:system-class))
-  (declare (ignore system-class))
+(defmethod seal-metaobject ((system-class sb-pcl:system-class))
   (values))
-
-(defmethod specializer-sealed-p ((system-class sb-pcl:system-class))
-  (declare (ignore system-class))
-  t)

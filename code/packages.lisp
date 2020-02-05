@@ -7,15 +7,18 @@
    #:class-sealable-p
    #:generic-function-sealable-p
    #:method-sealable-p
+   #:specializer-sealable-p
 
    #:metaobject-sealed-p
    #:class-sealed-p
    #:generic-function-sealed-p
    #:method-sealed-p
+   #:specializer-sealed-p
 
    #:seal-class
    #:seal-generic-function
    #:seal-method
+   #:specializer-specializer
 
    #:generic-function-specializer-profile
    #:specializer-type

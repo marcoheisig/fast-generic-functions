@@ -9,10 +9,5 @@
 (defmethod metaobject-sealed-p ((built-in-class built-in-class))
   t)
 
-(defmethod seal-class ((built-in-class built-in-class))
-  (declare (ignore built-in-class))
+(defmethod seal-metaobject ((built-in-class built-in-class))
   (values))
-
-(defmethod specializer-sealed-p ((built-in-class built-in-class))
-  (declare (ignore built-in-class))
-  t)

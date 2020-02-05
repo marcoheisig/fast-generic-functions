@@ -19,6 +19,14 @@
   (:method ((method method))
     (metaobject-sealable-p method)))
 
+(defgeneric specializer-sealable-p (specializer)
+  (:method ((class class))
+    (class-sealable-p class))
+  (:method ((eql-specializer eql-specializer))
+    (class-sealable-p
+     (class-of
+      (eql-specializer-object eql-specializer)))))
+
 ;;; Checking for sealed-ness
 
 (defgeneric metaobject-sealed-p (metaobject)
@@ -39,7 +47,8 @@
     (metaobject-sealed-p method)))
 
 (defgeneric specializer-sealed-p (specializer)
-  (:method ((class class)) nil)
+  (:method ((class class))
+    (class-sealed-p class))
   (:method ((eql-specializer eql-specializer))
     (specializer-sealed-p
      (class-of
@@ -48,16 +57,36 @@
 ;;; Sealing of metaobjects
 
 (defgeneric seal-metaobject (metaobject)
-  (:method :around ((metaobject t))
-    (when (metaobject-sealable-p metaobject)
-      (call-next-method))
-    metaobject))
+  (:method :before ((metaobject t))
+    (assert (metaobject-sealable-p metaobject)))
+  (:method :before ((class class))
+    ;; Class sealing implies finalization.
+    (unless (class-finalized-p class)
+      (finalize-inheritance class))
+    ;; A sealed class must have sealed superclasses.
+    (mapc #'seal-class (rest (class-precedence-list class)))))
 
-(defgeneric seal-class (class))
+(defgeneric seal-class (class)
+  (:method ((symbol symbol))
+    (seal-metaobject (find-class symbol)))
+  (:method ((class class))
+    (seal-metaobject class)))
 
-(defgeneric seal-generic-function (generic-function))
+(defgeneric seal-generic-function (generic-function)
+  (:method ((generic-function generic-function))
+    (seal-metaobject generic-function)))
 
-(defgeneric seal-method (method))
+(defgeneric seal-method (method)
+  (:method ((method method))
+    (seal-metaobject method)))
+
+(defgeneric seal-specializer (specializer)
+  (:method ((class class))
+    (seal-class class))
+  (:method ((eql-specializer eql-specializer))
+    (seal-class
+     (class-of
+      (eql-specializer-object eql-specializer)))))
 
 ;;; Miscellaneous
 
