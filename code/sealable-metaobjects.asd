@@ -23,7 +23,6 @@
    (:file "potentially-sealable-method")
    (:file "sealable-generic-function")
    (:file "compute-static-call-signatures")
-   (:file "sealable-standard-class")
    (:file "potentially-sealable-standard-method")
    (:file "sealable-standard-generic-function")
    (:file "define-sealable-generic-function")
