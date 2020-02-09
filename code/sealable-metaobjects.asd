@@ -13,8 +13,8 @@
    (:file "utilities")
    (:file "lambda-lists")
    (:file "generic-functions")
-   (:file "null-lexical-environment-p")
    (:file "specializer-prototype")
+   (:file "define-sealable-generic-function")
 
    ;; Sealable Metaobjects.
    (:file "sealable-metaobject-mixin")
@@ -22,15 +22,6 @@
    (:file "potentially-sealable-method")
    (:file "sealable-generic-function")
    (:file "compute-static-call-signatures")
-   (:file "potentially-sealable-standard-method")
-   (:file "sealable-standard-generic-function")
-   (:file "define-sealable-generic-function")
-
-   ;; Inlineable Metaobjects.
-   (:file "inlineable-generic-function")
-   (:file "inlineable-standard-generic-function")
-   (:file "potentially-inlineable-method")
-   (:file "potentially-inlineable-standard-method")
    (:file "inline-lambda")
 
    ;; The Magic.

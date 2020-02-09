@@ -31,3 +31,24 @@
      method-lambda
      (list* '.specializer-profile. (generic-function-specializer-profile sgf)
             initargs))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Derived Classes
+
+(defclass sealable-standard-generic-function
+    (standard-generic-function sealable-generic-function)
+  ()
+  (:default-initargs :method-class (find-class 'potentially-sealable-standard-method))
+  (:metaclass funcallable-standard-class))
+
+(defclass inlineable-generic-function (sealable-generic-function)
+  ()
+  (:default-initargs :method-class (find-class 'potentially-inlineable-method))
+  (:metaclass funcallable-standard-class))
+
+(defclass inlineable-standard-generic-function
+    (inlineable-generic-function sealable-standard-generic-function)
+  ()
+  (:metaclass funcallable-standard-class)
+  (:default-initargs :method-class (find-class 'potentially-inlineable-standard-method)))

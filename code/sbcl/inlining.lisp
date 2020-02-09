@@ -1,5 +1,9 @@
 (in-package #:sealable-metaobjects)
 
+#+(or)
+(defmethod seal-metaobject :after ((sealable-class sealable-class))
+  (proclaim `(sb-ext:freeze-type ,(class-name sealable-class))))
+
 (defmethod seal-metaobject :after ((sgf sealable-generic-function))
   (update-sealed-deftransforms sgf))
 
