@@ -22,16 +22,17 @@
   (let* ((sealed-methods (remove-if-not #'method-sealed-p (generic-function-methods sgf)))
          (list-of-specializers (mapcar #'method-specializers sealed-methods))
          (static-call-signatures '()))
-    (map-types-and-prototypes
-     (lambda (types prototypes)
-       (push (make-instance 'static-call-signature
-               :types types
-               :prototypes prototypes)
-             static-call-signatures))
-     ;; Turn the list of specializers of each sealed method into a list of
-     ;; specializers of each argument.
-     (apply #'mapcar #'list list-of-specializers)
-     (generic-function-specializer-profile sgf))
+    (unless (null list-of-specializers)
+      (map-types-and-prototypes
+       (lambda (types prototypes)
+         (push (make-instance 'static-call-signature
+                 :types types
+                 :prototypes prototypes)
+               static-call-signatures))
+       ;; Turn the list of specializers of each sealed method into a list of
+       ;; specializers of each argument.
+       (apply #'mapcar #'list list-of-specializers)
+       (generic-function-specializer-profile sgf)))
     static-call-signatures))
 
 (defun map-types-and-prototypes (fn specializers-list specializer-profile)
