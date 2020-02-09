@@ -17,7 +17,6 @@
    (:file "specializer-prototype")
 
    ;; Sealable Metaobjects.
-   (:file "built-in-class")
    (:file "sealable-metaobject-mixin")
    (:file "sealable-class")
    (:file "potentially-sealable-method")

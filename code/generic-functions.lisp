@@ -5,7 +5,8 @@
 (defgeneric metaobject-sealable-p (metaobject)
   (:method ((class class)) nil)
   (:method ((generic-function generic-function)) nil)
-  (:method ((method method)) nil))
+  (:method ((method method)) nil)
+  (:method ((built-in-class built-in-class)) t))
 
 (defgeneric class-sealable-p (class)
   (:method ((class class))
@@ -32,7 +33,8 @@
 (defgeneric metaobject-sealed-p (metaobject)
   (:method ((class class)) nil)
   (:method ((generic-function generic-function)) nil)
-  (:method ((method method)) nil))
+  (:method ((method method)) nil)
+  (:method ((built-in-class built-in-class)) t))
 
 (defgeneric class-sealed-p (class)
   (:method ((class class))
