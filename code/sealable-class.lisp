@@ -3,45 +3,23 @@
 (defclass sealable-class (sealable-metaobject-mixin class)
   ())
 
-(defclass sealable-standard-class
-    (standard-class sealable-class)
+;;; Ensure that each instance of a sealable class is a sealed instance,
+;;; i.e., an object with a fixed class.
+
+(defclass sealed-instance (t)
   ())
 
-(defmethod validate-superclass
-    ((sealable-standard-class sealable-standard-class)
-     (standard-class standard-class))
-  t)
+(defmethod change-class :around
+    ((object sealed-instance) new-class &key &allow-other-keys)
+  (error "Attempt to change the class of the sealed instance ~S."
+         object))
 
-(defclass sealable-class-instance (t)
-  ()
-  (:metaclass sealable-standard-class))
-
-(defclass sealable-standard-class-instance
-    (sealable-class-instance)
-  ()
-  (:metaclass sealable-standard-class))
-
-;;; Ensure that each instance of a sealable class is a sealable instance.
-
-(defmethod initialize-instance :after ((instance sealable-class) &key &allow-other-keys)
-  ;; We cannot use typep here, because the inheritance of INSTANCE is not
-  ;; yet finalized.
-  (unless (inherits instance (find-class 'sealable-class-instance))
-    (error "Sealable classes must inherit the class SEALABLE-CLASS-INSTANCE.")))
-
-(defmethod initialize-instance :after ((instance sealable-standard-class) &key &allow-other-keys)
-  ;; We cannot use typep here, because the inheritance of INSTANCE is not
-  ;; yet finalized.
-  (unless (inherits instance (find-class 'sealable-standard-class-instance))
-    (error "Sealable standard classes must inherit the class SEALABLE-STANDARD-CLASS-INSTANCE.")))
-
-(defun inherits (class other-class)
-  (let ((table (make-hash-table :test #'eq)))
-    (labels ((scan (class)
-               (unless (gethash class table)
-                 (setf (gethash class table) t)
-                 (when (eq class other-class)
-                   (return-from inherits t))
-                 (mapc #'scan (class-direct-superclasses class)))))
-      (scan class))))
-
+(defmethod shared-initialize
+    ((instance sealable-class)
+     (slot-names (eql t))
+     &rest initargs
+     &key direct-superclasses)
+  (apply #'call-next-method instance slot-names
+         :direct-superclasses
+         (adjoin (find-class 'sealed-instance) direct-superclasses)
+         initargs))

@@ -10,11 +10,6 @@
 (defmethod seal-metaobject ((metaobject sealable-metaobject-mixin))
   (setf (slot-value metaobject '%sealed-p) t))
 
-;; Invoke the primary methods on SEAL-METAOBJECT exactly once.
-(defmethod seal-metaobject :around ((metaobject sealable-metaobject-mixin))
-  (unless (metaobject-sealed-p metaobject)
-    (call-next-method)))
-
 ;;; It is an error to change the class of a sealed metaobject.
 (defmethod change-class :around
     ((metaobject sealable-metaobject-mixin) new-class &key &allow-other-keys)

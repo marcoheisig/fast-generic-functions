@@ -3,10 +3,11 @@
 ;;; Checking for sealability.
 
 (defgeneric metaobject-sealable-p (metaobject)
-  (:method ((class class)) nil)
+  (:method ((class class)) (system-class-p class))
   (:method ((generic-function generic-function)) nil)
   (:method ((method method)) nil)
-  (:method ((built-in-class built-in-class)) t))
+  (:method ((built-in-class built-in-class)) t)
+  (:method ((structure-class structure-class)) t))
 
 (defgeneric class-sealable-p (class)
   (:method ((class class))
@@ -31,10 +32,11 @@
 ;;; Checking for sealed-ness
 
 (defgeneric metaobject-sealed-p (metaobject)
-  (:method ((class class)) nil)
+  (:method ((class class)) (system-class-p class))
   (:method ((generic-function generic-function)) nil)
   (:method ((method method)) nil)
-  (:method ((built-in-class built-in-class)) t))
+  (:method ((built-in-class built-in-class)) t)
+  (:method ((structure-class structure-class)) t))
 
 (defgeneric class-sealed-p (class)
   (:method ((class class))
@@ -59,8 +61,13 @@
 ;;; Sealing of metaobjects
 
 (defgeneric seal-metaobject (metaobject)
-  (:method :before ((metaobject t))
-    (assert (metaobject-sealable-p metaobject)))
+  ;; Invoke primary methods on SEAL-METAOBJECT at most once.
+  (:method :around ((metaobject t))
+    (unless (metaobject-sealed-p metaobject)
+      (call-next-method)))
+  ;; Signal an error if the default primary method is reached.
+  (:method ((metaobject t))
+    (error "Cannot seal the metaobject ~S." metaobject))
   (:method :before ((class class))
     ;; Class sealing implies finalization.
     (unless (class-finalized-p class)

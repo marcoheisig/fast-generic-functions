@@ -17,9 +17,9 @@
 
 (defmethod generic-binary-+ ((a point) (b point))
   (print '(point point))
-  (make-instance 'point
-    :x (+ (x a) (x b))
-    :y (+ (y a) (y b))))
+  (make-point
+    :x (+ (point-x a) (point-x b))
+    :y (+ (point-y a) (point-y b))))
 
 (defmethod generic-binary-+ ((a number) (b number))
   (print '(number number))
