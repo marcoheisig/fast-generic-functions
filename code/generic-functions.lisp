@@ -76,16 +76,28 @@
     (mapc #'seal-class (rest (class-precedence-list class)))))
 
 (defgeneric seal-class (class)
+  ;; Invoke primary methods on SEAL-CLASS at most once.
+  (:method :around ((class class))
+    (unless (class-sealed-p class)
+      (call-next-method)))
   (:method ((symbol symbol))
     (seal-metaobject (find-class symbol)))
   (:method ((class class))
     (seal-metaobject class)))
 
 (defgeneric seal-generic-function (generic-function)
+  ;; Invoke primary methods on SEAL-GENERIC-FUNCTION at most once.
+  (:method :around ((generic-function generic-function))
+    (unless (generic-function-sealed-p generic-function)
+      (call-next-method)))
   (:method ((generic-function generic-function))
     (seal-metaobject generic-function)))
 
 (defgeneric seal-method (method)
+  ;; Invoke primary methods on SEAL-METHOD at most once.
+  (:method :around ((method method))
+    (unless (method-sealed-p method)
+      (call-next-method)))
   (:method ((method method))
     (seal-metaobject method)))
 
