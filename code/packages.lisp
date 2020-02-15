@@ -2,7 +2,10 @@
 
 (defpackage #:sealable-metaobjects
   (:use #:closer-common-lisp)
+  (:shadow #:defgeneric)
   (:export
+   #:defgeneric
+
    #:metaobject-sealable-p
    #:class-sealable-p
    #:generic-function-sealable-p
@@ -24,8 +27,6 @@
    #:specializer-type
    #:specializer-prototype
    #:specializer-direct-superspecializers
-
-   #:define-sealable-generic-function
 
    #:sealable-class
    #:sealable-class-instance

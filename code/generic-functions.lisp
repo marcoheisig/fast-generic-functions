@@ -111,8 +111,6 @@
 
 ;;; Miscellaneous
 
-(defgeneric generic-function-specializer-profile (generic-function))
-
 (defgeneric method-body (method))
 
 (defgeneric specializer-type (specializer)

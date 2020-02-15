@@ -12,7 +12,7 @@
 (defun required-argument (name)
   (error "Required argument: ~S" name))
 
-(defgeneric gensymify (object)
+(cl:defgeneric gensymify (object)
   (:method ((string string))
     (gensym (string-upcase (concatenate 'string string "-"))))
   (:method ((symbol symbol))

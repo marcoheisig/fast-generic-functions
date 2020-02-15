@@ -11,10 +11,10 @@
   ((:file "packages")
    (:file "debug")
    (:file "utilities")
+   (:file "defgeneric")
    (:file "lambda-lists")
    (:file "generic-functions")
    (:file "specializer-prototype")
-   (:file "define-sealable-generic-function")
 
    ;; Sealable Metaobjects.
    (:file "sealable-metaobject-mixin")
