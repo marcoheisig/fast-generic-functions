@@ -38,7 +38,7 @@
   (+ (char-code a)
      (char-code b)))
 
-(defmethod generic-binary-+ ((a double-float) (b t))
+(defmethod generic-binary-+ ((a double-float) (b number))
   (print '(double-float t))
   (+ a b))
 
@@ -55,7 +55,7 @@
 (defmethod rest-args (a1 (a2 number) &rest rest)
   (+ a1 a2 (length rest)))
 
-(seal-generic-function #'generic-find)
-(seal-generic-function #'generic-binary-+)
-(seal-generic-function #'generic-binary-*)
-(seal-generic-function #'rest-args)
+(seal-domain #'generic-find '(t sequence))
+(seal-domain #'generic-binary-+ '(number number))
+(seal-domain #'generic-binary-* '(number number))
+(seal-domain #'rest-args '(t number))

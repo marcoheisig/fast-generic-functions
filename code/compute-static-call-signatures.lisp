@@ -8,7 +8,7 @@
 ;;; these prototypes is representative for all arguments of the types of
 ;;; the call signature.
 
-(defgeneric compute-static-call-signatures (generic-function))
+(defgeneric compute-static-call-signatures (generic-function domain))
 
 (defclass static-call-signature ()
   ((%type
@@ -18,9 +18,14 @@
     :initarg :prototypes
     :reader static-call-signature-prototypes)))
 
-(defmethod compute-static-call-signatures ((sgf sealable-generic-function))
-  (let* ((sealed-methods (remove-if-not #'method-sealed-p (generic-function-methods sgf)))
-         (list-of-specializers (mapcar #'method-specializers sealed-methods))
+(defmethod compute-static-call-signatures ((sgf sealable-generic-function) (domain list))
+  (let* ((sealed-methods
+           (remove-if-not
+            (lambda (method)
+              (domain-intersectionp (method-specializers method) domain))
+            (generic-function-methods sgf)))
+         (list-of-specializers
+           (mapcar #'method-specializers sealed-methods))
          (static-call-signatures '()))
     (unless (null list-of-specializers)
       (map-types-and-prototypes

@@ -4,30 +4,20 @@
 (defmethod seal-metaobject :after ((sealable-class sealable-class))
   (proclaim `(sb-ext:freeze-type ,(class-name sealable-class))))
 
-(defmethod seal-metaobject :after
-    ((fast-generic-function fast-generic-function))
-  (update-sealed-deftransforms fast-generic-function))
-
-(defmethod add-method :after
+(defmethod seal-domain :after
     ((fast-generic-function fast-generic-function)
-     (fast-method fast-method))
-  (when (and (generic-function-sealed-p fast-generic-function)
-             (method-sealable-p fast-method))
-    (seal-method fast-method)
-    (update-sealed-deftransforms fast-generic-function)))
+     (domain list))
+  (update-deftransforms fast-generic-function domain))
 
-(defun update-sealed-deftransforms (fast-generic-function)
+(defun update-deftransforms (fast-generic-function domain)
   (let ((name (generic-function-name fast-generic-function)))
     ;; Ensure that the function is known.
     (eval `(sb-c:defknown ,name * * () :overwrite-fndb-silently t))
-    ;; Remove all existing IR1-transforms.
-    (let ((fun-info (sb-c::fun-info-or-lose name)))
-      (setf (sb-c::fun-info-transforms fun-info) '()))
     ;; Create an IR1-transform for each static call signature.
     (mapc
      (lambda (call-signature)
        (eval (make-deftransform fast-generic-function call-signature)))
-     (compute-static-call-signatures fast-generic-function))))
+     (compute-static-call-signatures fast-generic-function domain))))
 
 (defun make-deftransform (generic-function static-call-signature)
   (with-accessors ((name generic-function-name)) generic-function
@@ -77,7 +67,7 @@
          (effective-method-inline-lambda (fourth effective-method)))
         ((and (eq (first effective-method) 'call-method)
               (typep (second effective-method) 'potentially-sealable-method))
-         (method-inline-lambda (second effective-method)))
+         (fast-method-inline-lambda (second effective-method)))
         (t nil)))
 
 (defmethod generic-function-inline-lambda

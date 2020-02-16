@@ -13,13 +13,30 @@
 ;;; The good news is that fast generic functions offer plenty of potential
 ;;; for optimization.
 
-(defclass fast-method (potentially-inlineable-standard-method)
-  ())
+(defclass fast-method (potentially-sealable-standard-method)
+  ((%inline-lambda
+    :initarg .inline-lambda.
+    :reader fast-method-inline-lambda
+    :initform nil)))
 
 (defclass fast-generic-function (sealable-standard-generic-function)
   ()
   (:default-initargs :method-class (find-class 'fast-method))
   (:metaclass funcallable-standard-class))
+
+(defmethod make-method-lambda :around
+    ((fast-generic-function generic-function)
+     (fast-method fast-method)
+     lambda
+     environment)
+  (multiple-value-bind (method-lambda initargs)
+      (call-next-method)
+    (values
+     method-lambda
+     (list*
+      '.inline-lambda.
+      (compute-method-inline-lambda fast-generic-function fast-method lambda environment)
+      initargs))))
 
 (defmethod compute-method-inline-lambda
     ((generic-function fast-generic-function)
@@ -100,7 +117,7 @@
                  applicable-methods)
                 anonymized-lambda-list
                 (or (class-name (generic-function-method-class fast-generic-function))
-                    (find-class 'potentially-inlineable-method))))))))))
+                    (find-class 'fast-method))))))))))
 
 (defun wrap-in-call-method-macrolet (form lambda-list method-class)
   `(macrolet ((call-method (method &optional next-methods)
@@ -120,7 +137,7 @@
    method-class))
 
 (defun coerce-to-method (method lambda-list method-class)
-  (cond ((typep method 'potentially-inlineable-method)
+  (cond ((typep method 'fast-method)
          method)
         ((and (consp method)
               (eql (car method) 'make-method)
@@ -172,7 +189,7 @@
       (when (null g-rest-var)
         (assert (null m-rest-var)))
       `(funcall
-        ,(method-inline-lambda method)
+        ,(fast-method-inline-lambda method)
         ,@(mapcar #'required-info-variable g-required)
         ,@(loop for g-info in g-optional
                 for m-info in m-optional

@@ -18,8 +18,9 @@
 
    #:seal-class
    #:seal-generic-function
+   #:seal-domain
    #:seal-method
-   #:specializer-specializer
+   #:seal-specializer
 
    #:specializer-type
    #:specializer-prototype

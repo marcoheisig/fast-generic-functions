@@ -21,15 +21,7 @@
   (:method ((method method))
     (metaobject-sealable-p method)))
 
-(defgeneric specializer-sealable-p (specializer)
-  (:method ((class class))
-    (class-sealable-p class))
-  (:method ((eql-specializer eql-specializer))
-    (class-sealable-p
-     (class-of
-      (eql-specializer-object eql-specializer)))))
-
-;;; Checking for sealed-ness
+;;; Checking for sealed-ness.
 
 (defgeneric metaobject-sealed-p (metaobject)
   (:method ((class class)) (system-class-p class))
@@ -50,15 +42,7 @@
   (:method ((method method))
     (metaobject-sealed-p method)))
 
-(defgeneric specializer-sealed-p (specializer)
-  (:method ((class class))
-    (class-sealed-p class))
-  (:method ((eql-specializer eql-specializer))
-    (specializer-sealed-p
-     (class-of
-      (eql-specializer-object eql-specializer)))))
-
-;;; Sealing of metaobjects
+;;; Sealing of metaobjects.
 
 (defgeneric seal-metaobject (metaobject)
   ;; Invoke primary methods on SEAL-METAOBJECT at most once.
@@ -101,6 +85,24 @@
   (:method ((method method))
     (seal-metaobject method)))
 
+;;; Working with specializers.
+
+(defgeneric specializer-sealable-p (specializer)
+  (:method ((class class))
+    (class-sealable-p class))
+  (:method ((eql-specializer eql-specializer))
+    (class-sealable-p
+     (class-of
+      (eql-specializer-object eql-specializer)))))
+
+(defgeneric specializer-sealed-p (specializer)
+  (:method ((class class))
+    (class-sealed-p class))
+  (:method ((eql-specializer eql-specializer))
+    (specializer-sealed-p
+     (class-of
+      (eql-specializer-object eql-specializer)))))
+
 (defgeneric seal-specializer (specializer)
   (:method ((class class))
     (seal-class class))
@@ -108,10 +110,6 @@
     (seal-class
      (class-of
       (eql-specializer-object eql-specializer)))))
-
-;;; Miscellaneous
-
-(defgeneric method-body (method))
 
 (defgeneric specializer-type (specializer)
   (:method ((class class))
@@ -142,6 +140,41 @@ Examples:
  => NIL, NIL
 "))
 
+(defgeneric specializer-intersectionp (specializer-1 specializer-2)
+  (:method ((class-1 class) (class-2 class))
+    (multiple-value-bind (disjointp success)
+        (subtypep `(and ,class-1 ,class-2) nil)
+      (assert success)
+      (not disjointp)))
+  (:method ((class class) (eql-specializer eql-specializer))
+    (typep (eql-specializer-object eql-specializer) class))
+  (:method ((eql-specializer eql-specializer) (class class))
+    (typep (eql-specializer-object eql-specializer) class))
+  (:method ((eql-specializer-1 eql-specializer) (eql-specializer-2 eql-specializer))
+    (eql (eql-specializer-object eql-specializer-1)
+         (eql-specializer-object eql-specializer-2))))
+
+(defgeneric specializer-subtypep (specializer-1 specializer-2)
+  (:method ((class-1 class) (class-2 class))
+    (values (subtypep class-1 class-2)))
+  (:method ((class class) (eql-specializer eql-specializer))
+    (subtypep class (specializer-type eql-specializer)))
+  (:method ((eql-specializer eql-specializer) (class class))
+    (typep (eql-specializer-object eql-specializer) class))
+  (:method ((eql-specializer-1 eql-specializer) (eql-specializer-2 eql-specializer))
+    (eql (eql-specializer-object eql-specializer-1)
+         (eql-specializer-object eql-specializer-2))))
+
+(defun domain-intersectionp (domain-1 domain-2)
+  (assert (= (length domain-1)
+             (length domain-2)))
+  (every #'specializer-intersectionp domain-1 domain-2))
+
+(defun domain-subtypep (domain-1 domain-2)
+  (assert (= (length domain-1)
+             (length domain-2)))
+  (every #'specializer-subtypep domain-1 domain-2))
+
 (defgeneric specializer-direct-superspecializers (specializer)
   (:method ((class class))
     (class-direct-superclasses class))
@@ -149,6 +182,14 @@ Examples:
     (class-direct-superclasses
      (class-of
       (eql-specializer-object eql-specializer)))))
+
+;;; Miscellaneous
+
+(defgeneric method-body (method))
+
+(defgeneric sealed-domains (generic-function))
+
+(defgeneric (setf sealed-domains) (value generic-function))
 
 (defgeneric compute-method-inline-lambda (generic-function method lambda environment))
 
