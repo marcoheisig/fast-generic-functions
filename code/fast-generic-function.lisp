@@ -131,7 +131,6 @@
                                     :initial-element (find-class 't))
            :qualifiers '()
            :function #'values
-           '.specializer-profile. '()
            '.inline-lambda.
            `(lambda ,lambda-list
               (declare (ignorable ,@(lambda-list-variables lambda-list)))

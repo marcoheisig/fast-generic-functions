@@ -31,27 +31,18 @@
                static-call-signatures))
        ;; Turn the list of specializers of each sealed method into a list of
        ;; specializers of each argument.
-       (apply #'mapcar #'list list-of-specializers)
-       (generic-function-specializer-profile sgf)))
+       (apply #'mapcar #'list list-of-specializers)))
     static-call-signatures))
 
-(defun map-types-and-prototypes (fn specializers-list specializer-profile)
-  (assert (= (length specializers-list)
-             (length specializer-profile)))
-  (labels ((rec (sl sp types prototypes)
+(defun map-types-and-prototypes (fn specializers-list)
+  (labels ((rec (sl types prototypes)
              (if (null sl)
                  (funcall fn (reverse types) (reverse prototypes))
-                 (if (not (first sp))
-                     (rec (rest sl)
-                          (rest sp)
-                          (cons t types)
-                          (cons t prototypes))
-                     (loop for (type prototype) in (type-prototype-pairs (first sl))
-                           do (rec (rest sl)
-                                   (rest sp)
-                                   (cons type types)
-                                   (cons prototype prototypes)))))))
-    (rec specializers-list specializer-profile '() '())))
+                 (loop for (type prototype) in (type-prototype-pairs (first sl))
+                       do (rec (rest sl)
+                               (cons type types)
+                               (cons prototype prototypes))))))
+    (rec specializers-list '() '())))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

@@ -11,7 +11,6 @@
   ((:file "packages")
    (:file "debug")
    (:file "utilities")
-   (:file "defgeneric")
    (:file "lambda-lists")
    (:file "generic-functions")
    (:file "specializer-prototype")

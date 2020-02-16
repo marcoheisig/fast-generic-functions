@@ -15,20 +15,13 @@
   ((%method-properties
     :initarg .method-properties.
     :accessor method-properties
-    :initform '())
-   (%specializer-profile
-    :initarg .specializer-profile.
-    :accessor method-specializer-profile
-    :initform (required-argument '.specializer-profile.))))
+    :initform '())))
 
 (defmethod metaobject-sealable-p ((psm potentially-sealable-method))
   (every #'specializer-sealed-p (method-specializers psm)))
 
 (defmethod seal-metaobject :before ((psm potentially-sealable-method))
-  (loop for specializer in (method-specializers psm)
-        for specializing-p in (method-specializer-profile psm) do
-          (when specializing-p
-            (seal-specializer specializer))))
+  (mapcar #'seal-specializer (method-specializers psm)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
