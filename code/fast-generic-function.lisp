@@ -1,8 +1,33 @@
 (in-package #:sealable-metaobjects)
 
+(defgeneric compute-method-inline-lambda (generic-function method lambda environment))
+
+(defgeneric compute-generic-function-inline-lambda (generic-function applicable-methods))
+
+;;; A fast generic function is a sealable generic function with only fast
+;;; methods attached to it.  A fast method has the following restrictions:
+;;;
+;;; 1. It must be defined in a null lexical environment.
+;;;
+;;; 2. Users must not interfere with the behavior of MAKE-METHOD-LAMBDA.
+;;;
+;;; 3. The body of a fast method must only call CALL-NEXT-METHOD with zero
+;;;    arguments.
+;;;
+;;; The good news is that fast generic functions offer plenty of potential
+;;; for optimization.
+
+(defclass fast-method (potentially-inlineable-standard-method)
+  ())
+
+(defclass fast-generic-function (sealable-standard-generic-function)
+  ()
+  (:default-initargs :method-class (find-class 'fast-method))
+  (:metaclass funcallable-standard-class))
+
 (defmethod compute-method-inline-lambda
-    ((generic-function inlineable-generic-function)
-     (method potentially-inlineable-method)
+    ((generic-function fast-generic-function)
+     (method fast-method)
      lambda
      environment)
   (destructuring-bind (lambda-symbol lambda-list &rest body) lambda
@@ -36,9 +61,9 @@
            environment))))))
 
 (defmethod compute-generic-function-inline-lambda
-    ((igf inlineable-generic-function) applicable-methods)
+    ((fast-generic-function fast-generic-function) applicable-methods)
   (multiple-value-bind (required optional rest-var keyword allow-other-keys-p)
-      (parse-ordinary-lambda-list (generic-function-lambda-list igf))
+      (parse-ordinary-lambda-list (generic-function-lambda-list fast-generic-function))
     ;; The keywords of the effective method are the union of the keywords
     ;; of the generic function and the keywords of each applicable method.
     (dolist (method applicable-methods)
@@ -58,7 +83,7 @@
       (trivial-macroexpand-all:macroexpand-all
        `(lambda ,anonymized-lambda-list
           (declare (ignorable ,@(lambda-list-variables anonymized-lambda-list)))
-          (let ((.gf. #',(generic-function-name igf)))
+          (let ((.gf. #',(generic-function-name fast-generic-function)))
             (declare (ignorable .gf.))
             #+sbcl(declare (sb-ext:disable-package-locks common-lisp:call-method))
             #+sbcl(declare (sb-ext:disable-package-locks common-lisp:make-method))
@@ -74,11 +99,11 @@
                    `(progn sb-pcl::.valid-keys. sb-pcl::.keyargs-start. (values))))
               ,(wrap-in-call-method-macrolet
                 (compute-effective-method
-                 igf
-                 (generic-function-method-combination igf)
+                 fast-generic-function
+                 (generic-function-method-combination fast-generic-function)
                  applicable-methods)
                 anonymized-lambda-list
-                (or (class-name (generic-function-method-class igf))
+                (or (class-name (generic-function-method-class fast-generic-function))
                     (find-class 'potentially-inlineable-method))))))))))
 
 (defun wrap-in-call-method-macrolet (form lambda-list method-class)
@@ -125,7 +150,7 @@
               (call-next-method ()
                 (no-next-method
                  .gf.
-                 (sb-pcl:class-prototype
+                 (specializer-prototype
                   (find-class ',method-class)))))
          (declare (ignorable #'next-method-p #'call-next-method))
          ,form)

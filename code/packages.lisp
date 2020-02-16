@@ -4,6 +4,7 @@
   (:use #:closer-common-lisp)
   (:shadow #:defgeneric)
   (:export
+   #:generic-function-specializer-profile
    #:defgeneric
 
    #:metaobject-sealable-p
@@ -23,7 +24,6 @@
    #:seal-method
    #:specializer-specializer
 
-   #:generic-function-specializer-profile
    #:specializer-type
    #:specializer-prototype
    #:specializer-direct-superspecializers
@@ -33,9 +33,13 @@
    #:sealable-generic-function
    #:inlineable-generic-function
    #:inlineable-standard-generic-function
-   #:sealable-method
+   #:method-properties
+   #:potentially-sealable-method
    #:sealable-standard-class
    #:sealable-standard-class-instance
    #:sealable-standard-generic-function
-   #:sealable-standard-method))
+   #:potentially-sealable-standard-method
+
+   #:fast-generic-function
+   #:fast-method))
 

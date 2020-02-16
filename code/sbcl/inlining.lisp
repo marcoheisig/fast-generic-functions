@@ -4,18 +4,20 @@
 (defmethod seal-metaobject :after ((sealable-class sealable-class))
   (proclaim `(sb-ext:freeze-type ,(class-name sealable-class))))
 
-(defmethod seal-metaobject :after ((sgf sealable-generic-function))
-  (update-sealed-deftransforms sgf))
+(defmethod seal-metaobject :after
+    ((fast-generic-function fast-generic-function))
+  (update-sealed-deftransforms fast-generic-function))
 
-(defmethod add-method :after ((sgf sealable-generic-function)
-                              (psm potentially-sealable-method))
-  (when (and (generic-function-sealed-p sgf)
-             (method-sealable-p psm))
-    (seal-method psm)
-    (update-sealed-deftransforms sgf)))
+(defmethod add-method :after
+    ((fast-generic-function fast-generic-function)
+     (fast-method fast-method))
+  (when (and (generic-function-sealed-p fast-generic-function)
+             (method-sealable-p fast-method))
+    (seal-method fast-method)
+    (update-sealed-deftransforms fast-generic-function)))
 
-(defun update-sealed-deftransforms (sgf)
-  (let ((name (generic-function-name sgf)))
+(defun update-sealed-deftransforms (fast-generic-function)
+  (let ((name (generic-function-name fast-generic-function)))
     ;; Ensure that the function is known.
     (eval `(sb-c:defknown ,name * * () :overwrite-fndb-silently t))
     ;; Remove all existing IR1-transforms.
@@ -24,8 +26,8 @@
     ;; Create an IR1-transform for each static call signature.
     (mapc
      (lambda (call-signature)
-       (eval (make-deftransform sgf call-signature)))
-     (compute-static-call-signatures sgf))))
+       (eval (make-deftransform fast-generic-function call-signature)))
+     (compute-static-call-signatures fast-generic-function))))
 
 (defun make-deftransform (generic-function static-call-signature)
   (with-accessors ((name generic-function-name)) generic-function
@@ -91,7 +93,7 @@
         ,@gensyms))))
 
 (defmethod generic-function-inline-lambda
-    ((generic-function inlineable-generic-function) arity prototypes)
+    ((generic-function fast-generic-function) arity prototypes)
   (compute-generic-function-inline-lambda
    generic-function
    (compute-applicable-methods generic-function prototypes)))

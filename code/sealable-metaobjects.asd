@@ -22,9 +22,9 @@
    (:file "potentially-sealable-method")
    (:file "sealable-generic-function")
    (:file "compute-static-call-signatures")
-   (:file "inline-lambda")
 
-   ;; The Magic.
+   ;; Fast Generic Functions.
+   (:file "fast-generic-function")
    (:module "sbcl" :if-feature :sbcl
     :components
     ((:file "system-class")
