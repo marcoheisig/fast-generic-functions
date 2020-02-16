@@ -2,7 +2,10 @@
 
 (defun starts-with (item)
   (lambda (sequence)
-    (eql (elt sequence 0) item)))
+    (typecase sequence
+      (list (eql (first sequence) item))
+      (sequence (eql (elt sequence 0) item))
+      (otherwise nil))))
 
 (defun block-name (function-name)
   (etypecase function-name
