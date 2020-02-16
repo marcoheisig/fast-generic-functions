@@ -25,7 +25,7 @@
              (length domain)))
     ;; Ensure that we don't call any next methods if the supplied domain
     ;; has already been sealed.
-    (unless (find domain (sealed-domains sgf))
+    (unless (find domain (sealed-domains sgf) :test #'equal)
       (call-next-method sgf domain))))
 
 ;;; Ensure that the generic function is sealed, and that the newly sealed
@@ -56,6 +56,18 @@
                (mapcar #'specializer-type domain)))
       (seal-method method)))
   (push domain (sealed-domains sgf)))
+
+;;; Skip the call to add-method if the list of specializers is equal to
+;;; that of an existing, sealed method.
+(defmethod add-method :around
+    ((sgf sealable-generic-function)
+     (psm potentially-sealable-method))
+  (dolist (method (generic-function-methods sgf))
+    (when (and (method-sealed-p method)
+               (equal (method-specializers psm)
+                      (method-specializers method)))
+      (return-from add-method psm)))
+  (call-next-method))
 
 ;;; Ensure that the method to be added is disjoint from all sealed domains.
 (defmethod add-method :before
