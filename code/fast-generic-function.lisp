@@ -1,9 +1,5 @@
 (in-package #:sealable-metaobjects)
 
-(defgeneric compute-method-inline-lambda (generic-function method lambda environment))
-
-(defgeneric compute-generic-function-inline-lambda (generic-function applicable-methods))
-
 ;;; A fast generic function is a sealable generic function with only fast
 ;;; methods attached to it.  A fast method has the following restrictions:
 ;;;
