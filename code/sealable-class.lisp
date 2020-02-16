@@ -19,6 +19,10 @@
      (slot-names (eql t))
      &rest initargs
      &key direct-superclasses)
+  (unless (every #'class-sealable-p direct-superclasses)
+    (error "~@<The superclasses of a sealable class must be sealable. ~
+               The superclass ~S violates this restriction.~:@>"
+           (find-if-not #'class-sealable-p direct-superclasses)))
   (apply #'call-next-method instance slot-names
          :direct-superclasses
          (adjoin (find-class 'sealed-instance) direct-superclasses)
