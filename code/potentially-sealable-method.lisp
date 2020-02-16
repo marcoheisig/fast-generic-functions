@@ -1,18 +1,28 @@
 (in-package #:sealable-metaobjects)
 
+;;; There is no portable way to add options to a method.  So instead, we
+;;; allow programmers to declare METHOD-PROPERTIES.
+;;;
+;;; Example:
+;;;
+;;; (defmethod foo (x y)
+;;;   (declare (method-properties inline))
+;;;   (+ x y))
+
+(declaim (declaration method-properties))
+
 (defclass potentially-sealable-method (sealable-metaobject-mixin method)
-  ((%specializer-profile
+  ((%method-properties
+    :initarg .method-properties.
+    :accessor method-properties
+    :initform '())
+   (%specializer-profile
     :initarg .specializer-profile.
     :accessor method-specializer-profile
     :initform (required-argument '.specializer-profile.))))
 
 (defmethod metaobject-sealable-p ((psm potentially-sealable-method))
-  (every
-   (lambda (specializer specializing-p)
-     (or (not specializing-p)
-         (specializer-sealed-p specializer)))
-   (method-specializers psm)
-   (method-specializer-profile psm)))
+  (every #'specializer-sealed-p (method-specializers psm)))
 
 (defmethod seal-metaobject :before ((psm potentially-sealable-method))
   (loop for specializer in (method-specializers psm)

@@ -30,6 +30,12 @@
     (values
      method-lambda
      (list* '.specializer-profile. (generic-function-specializer-profile sgf)
+            '.method-properties
+            (let* ((declare-forms (remove-if-not (starts-with 'declare) lambda))
+                   (declarations (apply #'append (mapcar #'rest declare-forms))))
+              (reduce #'union (remove-if-not (starts-with 'method-properties) declarations)
+                      :key #'rest
+                      :initial-value '()))
             initargs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
