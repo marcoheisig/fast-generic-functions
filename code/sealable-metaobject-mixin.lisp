@@ -29,3 +29,28 @@
     ((metaobject sealable-metaobject-mixin) &key &allow-other-keys)
   (unless (metaobject-sealed-p metaobject)
     (call-next-method)))
+
+;;; It is an error to change the class of an instance of a sealable
+;;; metaobject.
+
+(defclass sealable-metaobject-instance (t)
+  ())
+
+(defmethod change-class :around
+    ((instance sealable-metaobject-instance) new-class &key &allow-other-keys)
+  (error "Attempt to change the class of the sealable metaobject instance ~S."
+         instance))
+
+(defmethod shared-initialize
+    ((instance sealable-metaobject-mixin)
+     (slot-names (eql t))
+     &rest initargs
+     &key direct-superclasses)
+  (unless (every #'class-sealable-p direct-superclasses)
+    (error "~@<The superclasses of a sealable metaobject must be sealable. ~
+               The superclass ~S violates this restriction.~:@>"
+           (find-if-not #'class-sealable-p direct-superclasses)))
+  (apply #'call-next-method instance slot-names
+         :direct-superclasses
+         (adjoin (find-class 'sealable-metaobject-instance) direct-superclasses)
+         initargs))
