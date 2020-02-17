@@ -2,7 +2,8 @@
 
 (defclass sealable-generic-function (sealable-metaobject-mixin generic-function)
   ((%sealed-domains :initform '() :accessor sealed-domains))
-  (:default-initargs :method-class (find-class 'potentially-sealable-method))
+  (:default-initargs
+   :method-class (find-class 'potentially-sealable-method))
   (:metaclass funcallable-standard-class))
 
 ;;; Check that the supplied domain is sane.
@@ -91,25 +92,6 @@
                  with the existing sealed domain ~S.~:@>"
              psm (method-specializers psm) sgf (mapcar #'specializer-type domain)))))
 
-;;; Track all properties that have been declared in the body of the method
-;;; lambda, and make them accessible as METHOD-PROPERTIES of that method.
-(defmethod make-method-lambda :around
-    ((sgf sealable-generic-function)
-     (psm potentially-sealable-method)
-     lambda
-     environment)
-  (multiple-value-bind (method-lambda initargs)
-      (call-next-method)
-    (values
-     method-lambda
-     (list* '.method-properties.
-            (let* ((declare-forms (remove-if-not (starts-with 'declare) lambda))
-                   (declarations (apply #'append (mapcar #'rest declare-forms))))
-              (reduce #'union (remove-if-not (starts-with 'method-properties) declarations)
-                      :key #'rest
-                      :initial-value '()))
-            initargs))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;; Derived Classes
@@ -117,5 +99,6 @@
 (defclass sealable-standard-generic-function
     (standard-generic-function sealable-generic-function)
   ()
-  (:default-initargs :method-class (find-class 'potentially-sealable-standard-method))
+  (:default-initargs
+   :method-class (find-class 'potentially-sealable-standard-method))
   (:metaclass funcallable-standard-class))

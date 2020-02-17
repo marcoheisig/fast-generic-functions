@@ -21,7 +21,8 @@
 
 (defclass fast-generic-function (sealable-standard-generic-function)
   ()
-  (:default-initargs :method-class (find-class 'fast-method))
+  (:default-initargs
+   :method-class (find-class 'fast-method))
   (:metaclass funcallable-standard-class))
 
 (defmethod make-method-lambda :around

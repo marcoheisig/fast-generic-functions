@@ -25,6 +25,25 @@
       (error "~@<~S is not a valid method property for the method ~S.~@:>"
              method-property psm))))
 
+;;; Track all properties that have been declared in the body of the method
+;;; lambda, and make them accessible as METHOD-PROPERTIES of that method.
+(defmethod make-method-lambda :around
+    ((gf generic-function)
+     (psm potentially-sealable-method)
+     lambda
+     environment)
+  (multiple-value-bind (method-lambda initargs)
+      (call-next-method)
+    (values
+     method-lambda
+     (list* '.method-properties.
+            (let* ((declare-forms (remove-if-not (starts-with 'declare) lambda))
+                   (declarations (apply #'append (mapcar #'rest declare-forms))))
+              (reduce #'union (remove-if-not (starts-with 'method-properties) declarations)
+                      :key #'rest
+                      :initial-value '()))
+            initargs))))
+
 (defmethod metaobject-sealable-p ((psm potentially-sealable-method))
   (every #'specializer-sealed-p (method-specializers psm)))
 
