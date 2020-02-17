@@ -17,6 +17,14 @@
     :accessor method-properties
     :initform '())))
 
+(defmethod shared-initialize :after
+    ((psm potentially-sealable-method)
+     slot-names &key ((.method-properties. method-properties) '()) &allow-other-keys)
+  (dolist (method-property method-properties)
+    (unless (validate-method-property psm method-property)
+      (error "~@<~S is not a valid method property for the method ~S.~@:>"
+             method-property psm))))
+
 (defmethod metaobject-sealable-p ((psm potentially-sealable-method))
   (every #'specializer-sealed-p (method-specializers psm)))
 

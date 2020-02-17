@@ -26,12 +26,14 @@
    #:specializer-prototype
    #:specializer-direct-superspecializers
 
+   #:method-properties
+   #:validate-method-property
+
    #:sealable-class
    #:sealable-class-instance
    #:sealable-generic-function
    #:inlineable-generic-function
    #:inlineable-standard-generic-function
-   #:method-properties
    #:potentially-sealable-method
    #:sealable-standard-class
    #:sealable-standard-class-instance

@@ -183,9 +183,15 @@ Examples:
      (class-of
       (eql-specializer-object eql-specializer)))))
 
-;;; Miscellaneous
+;;; Method properties
 
-(defgeneric method-body (method))
+(defgeneric method-properties (method))
+
+(defgeneric validate-method-property (method method-property)
+  (:method ((method method) (method-property t))
+    nil))
+
+;;; Miscellaneous
 
 (defgeneric sealed-domains (generic-function))
 
