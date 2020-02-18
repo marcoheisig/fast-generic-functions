@@ -197,6 +197,8 @@ Examples:
 
 (defgeneric (setf sealed-domains) (value generic-function))
 
+(defgeneric compute-static-call-signatures (generic-function domain))
+
 (defgeneric compute-method-inline-lambda (generic-function method lambda environment))
 
 (defgeneric compute-generic-function-inline-lambda (generic-function applicable-methods))

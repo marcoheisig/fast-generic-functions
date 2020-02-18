@@ -1,18 +1,5 @@
 (in-package #:sealable-metaobjects)
 
-;;; A fast generic function is a sealable generic function with only fast
-;;; methods attached to it.  A fast method has the following restrictions:
-;;;
-;;; 1. It must be defined in a null lexical environment.
-;;;
-;;; 2. Users must not interfere with the behavior of MAKE-METHOD-LAMBDA.
-;;;
-;;; 3. The body of a fast method must only call CALL-NEXT-METHOD with zero
-;;;    arguments.
-;;;
-;;; The good news is that fast generic functions offer plenty of potential
-;;; for optimization.
-
 (defclass fast-method (potentially-sealable-standard-method)
   ((%inline-lambda
     :initarg .inline-lambda.
