@@ -16,6 +16,12 @@
     :initarg :prototypes
     :reader static-call-signature-prototypes)))
 
+(defmethod print-object ((scs static-call-signature) stream)
+  (print-unreadable-object (scs stream :type t :identity t)
+    (format stream "~S ~S"
+            (static-call-signature-types scs)
+            (static-call-signature-prototypes scs))))
+
 (defmethod compute-static-call-signatures
     ((sgf sealable-generic-function)
      (domain list))
