@@ -61,10 +61,17 @@
 ;;; Reasoning About Specializer Specificity
 
 (defclass snode ()
-  ((%specializer :initarg :specializer :accessor snode-specializer)
+  (;; The specializer of an snode.
+   (%specializer :initarg :specializer :accessor snode-specializer)
+   ;; A (possibly empty) list of snodes for each child class or eql specializer.
    (%children :initform '() :accessor snode-children)
+   ;; A list of snodes with one entry for each parent class.
    (%parents :initform '() :accessor snode-parents)
-   (%visitedp :initform nil :accessor snode-visitedp)))
+   ;; Whether the snode has already been visited.
+   (%visitedp :initform nil :accessor snode-visitedp)
+   ;; Whether the snode corresponds to a specializer of an existing method
+   ;; or the domain.
+   (%relevantp :initform nil :accessor snode-relevantp)))
 
 (defun snode-type (snode)
   (type-specifier-and
@@ -100,24 +107,37 @@
   (values))
 
 (defun type-prototype-pairs (specializers domain)
-  (let ((*snode-table* (make-hash-table)))
+  (let* ((*snode-table* (make-hash-table))
+         (specializer-snodes (mapcar #'specializer-snode specializers))
+         (domain-snodes (mapcar #'specializer-snode domain)))
+    ;; Initialize domain and specializer snodes.
+    (dolist (snode specializer-snodes)
+      (setf (snode-relevantp snode) t))
+    (dolist (snode domain-snodes)
+      (setf (snode-relevantp snode) t))
     ;; Now connect all snodes.
-    (labels ((visit (specializer top)
-               (let ((snode (specializer-snode specializer)))
-                 (unless (snode-visitedp snode)
-                   (setf (snode-visitedp snode) t)
-                   (unless (eql specializer top)
-                     (dolist (super (specializer-direct-superspecializers specializer))
-                       (snode-add-edge (specializer-snode super) snode)
-                       (visit super top)))))))
-      (mapc #'visit specializers domain))
+    (labels ((visit (current relevant top)
+               (unless (snode-visitedp current)
+                 (setf (snode-visitedp current) t)
+                 (unless (eql current top)
+                   (dolist (specializer
+                            (specializer-direct-superspecializers
+                             (snode-specializer current)))
+                     (let ((super (specializer-snode specializer)))
+                       (cond ((snode-relevantp super)
+                              (snode-add-edge super relevant)
+                              (visit super super top))
+                             (t
+                              (visit super relevant top)))))))))
+      (mapc #'visit specializer-snodes specializer-snodes domain-snodes))
     ;; Finally, build all pairs.
     (let ((pairs '()))
       (loop for snode being the hash-values of *snode-table* do
-        (multiple-value-bind (prototype prototype-p)
-            (snode-prototype snode)
-          (when prototype-p
-            (push (list (snode-type snode) prototype)
-                  pairs))))
+        (when (snode-relevantp snode)
+          (multiple-value-bind (prototype prototype-p)
+              (snode-prototype snode)
+            (when prototype-p
+              (push (list (snode-type snode) prototype)
+                    pairs)))))
       pairs)))
 
