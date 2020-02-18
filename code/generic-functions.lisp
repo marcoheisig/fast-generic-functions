@@ -179,7 +179,7 @@ Examples:
   (:method ((class class))
     (class-direct-superclasses class))
   (:method ((eql-specializer eql-specializer))
-    (class-direct-superclasses
+    (list
      (class-of
       (eql-specializer-object eql-specializer)))))
 

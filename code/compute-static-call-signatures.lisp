@@ -42,14 +42,15 @@
                static-call-signatures))
        ;; Turn the list of specializers of each sealed method into a list of
        ;; specializers of each argument.
-       (apply #'mapcar #'list list-of-specializers)))
+       (apply #'mapcar #'list list-of-specializers)
+       domain))
     static-call-signatures))
 
-(defun map-types-and-prototypes (fn specializers-list)
+(defun map-types-and-prototypes (fn specializers-list domain)
   (labels ((rec (sl types prototypes)
              (if (null sl)
                  (funcall fn (reverse types) (reverse prototypes))
-                 (loop for (type prototype) in (type-prototype-pairs (first sl))
+                 (loop for (type prototype) in (type-prototype-pairs (first sl) domain)
                        do (rec (rest sl)
                                (cons type types)
                                (cons prototype prototypes))))))
@@ -62,7 +63,23 @@
 (defclass snode ()
   ((%specializer :initarg :specializer :accessor snode-specializer)
    (%children :initform '() :accessor snode-children)
-   (%parents :initform '() :accessor snode-parents)))
+   (%parents :initform '() :accessor snode-parents)
+   (%visitedp :initform nil :accessor snode-visitedp)))
+
+(defun snode-type (snode)
+  (type-specifier-and
+   (specializer-type (snode-specializer snode))
+   (type-specifier-not
+    (apply #'type-specifier-or
+           (loop for subspecializer in (snode-children snode)
+                 collect
+                 (specializer-type
+                  (snode-specializer subspecializer)))))))
+
+(defun snode-prototype (snode)
+  (specializer-prototype
+   (snode-specializer snode)
+   (mapcar #'snode-specializer (snode-children snode))))
 
 (defvar *snode-table*)
 
@@ -75,29 +92,25 @@
           (setf (gethash specializer *snode-table*) snode)
           snode))))
 
-(defun specializer-snode-p (specializer)
-  (nth-value 1 (gethash specializer *snode-table*)))
-
 (defun snode-add-edge (super-snode sub-snode)
+  (print (list (snode-specializer super-snode)
+               (snode-specializer sub-snode)))
   (pushnew super-snode (snode-parents sub-snode))
   (pushnew sub-snode (snode-children super-snode))
   (values))
 
-(defun type-prototype-pairs (specializers)
+(defun type-prototype-pairs (specializers domain)
   (let ((*snode-table* (make-hash-table)))
-    ;; Ensure that supplied specializers have a corresponding snode.
-    (mapc #'specializer-snode specializers)
     ;; Now connect all snodes.
-    (labels ((walk (current origin)
-               (if (and (not (eq current origin))
-                        (specializer-snode-p current))
-                   (snode-add-edge
-                    (specializer-snode current)
-                    (specializer-snode origin))
-                   (mapc
-                    (lambda (super) (walk super origin))
-                    (specializer-direct-superspecializers current)))))
-      (mapc #'walk specializers specializers))
+    (labels ((visit (specializer top)
+               (let ((snode (specializer-snode specializer)))
+                 (unless (snode-visitedp snode)
+                   (setf (snode-visitedp snode) t)
+                   (unless (eql specializer top)
+                     (dolist (super (specializer-direct-superspecializers specializer))
+                       (snode-add-edge (specializer-snode super) snode)
+                       (visit super top)))))))
+      (mapc #'visit specializers domain))
     ;; Finally, build all pairs.
     (let ((pairs '()))
       (loop for snode being the hash-values of *snode-table* do
@@ -108,17 +121,3 @@
                   pairs))))
       pairs)))
 
-(defun snode-type (snode)
-  (let ((stype (specializer-type (snode-specializer snode)))
-        (subspecializers (snode-children snode)))
-    (if (null subspecializers)
-        stype
-        `(and ,stype
-              (not (or ,@(loop for subspecializer in subspecializers
-                               collect (specializer-type
-                                        (snode-specializer subspecializer)))))))))
-
-(defun snode-prototype (snode)
-  (specializer-prototype
-   (snode-specializer snode)
-   (mapcar #'snode-specializer (snode-children snode))))
