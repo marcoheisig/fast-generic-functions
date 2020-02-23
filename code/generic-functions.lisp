@@ -191,7 +191,7 @@ Examples:
   (:method ((method method) (method-property t))
     nil))
 
-;;; Miscellaneous
+;;; Internal Generic Functions
 
 (defgeneric sealed-domains (generic-function))
 
@@ -202,3 +202,5 @@ Examples:
 (defgeneric compute-method-inline-lambda (generic-function method lambda environment))
 
 (defgeneric compute-generic-function-inline-lambda (generic-function applicable-methods))
+
+(defgeneric optimize-fast-generic-function-call (generic-function static-call-signature arity))

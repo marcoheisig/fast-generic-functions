@@ -1,9 +1,5 @@
 (in-package #:sealable-metaobjects)
 
-#+(or)
-(defmethod seal-metaobject :after ((sealable-class sealable-class))
-  (proclaim `(sb-ext:freeze-type ,(class-name sealable-class))))
-
 (defmethod seal-domain :after
     ((fast-generic-function fast-generic-function)
      (domain list))

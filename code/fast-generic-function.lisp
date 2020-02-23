@@ -12,6 +12,10 @@
    :method-class (find-class 'fast-method))
   (:metaclass funcallable-standard-class))
 
+(defmethod validate-method-property
+    ((method fast-method) (property (eql :inlineable)))
+  t)
+
 (defmethod make-method-lambda :around
     ((fast-generic-function generic-function)
      (fast-method fast-method)
