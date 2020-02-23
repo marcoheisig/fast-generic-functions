@@ -100,8 +100,6 @@
           snode))))
 
 (defun snode-add-edge (super-snode sub-snode)
-  (print (list (snode-specializer super-snode)
-               (snode-specializer sub-snode)))
   (pushnew super-snode (snode-parents sub-snode))
   (pushnew sub-snode (snode-children super-snode))
   (values))
