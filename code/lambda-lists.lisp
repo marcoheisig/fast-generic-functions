@@ -272,9 +272,11 @@ Can parse all but specialized lambda lists.
       `(&optional
         ,@(mapcar
            (lambda (info)
-             (list (optional-info-variable info)
-                   (optional-info-initform info)
-                   (or (optional-info-suppliedp info) (gensym))))
+             `(,(optional-info-variable info)
+               ,(optional-info-initform info)
+               ,@(if (optional-info-suppliedp info)
+                     `(,(optional-info-suppliedp info))
+                     `())))
            optional))))
 
 (defun unparse-keyword (keyword allow-other-keys-p)
@@ -284,10 +286,11 @@ Can parse all but specialized lambda lists.
       `(&key
         ,@(mapcar
            (lambda (info)
-             (list (list (keyword-info-keyword info)
-                         (keyword-info-variable info))
-                   (keyword-info-initform info)
-                   (or (keyword-info-suppliedp info) (gensym))))
+             `((,(keyword-info-keyword info) ,(keyword-info-variable info))
+               ,(keyword-info-initform info)
+               ,@(if (keyword-info-suppliedp info)
+                     `(,(keyword-info-suppliedp info))
+                     `())))
            keyword)
         ,@(if allow-other-keys-p
               '(&allow-other-keys)

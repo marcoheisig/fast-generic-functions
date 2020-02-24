@@ -31,47 +31,37 @@
      method-lambda
      (list*
       '.inline-lambda.
-      (compute-method-inline-lambda fast-generic-function fast-method lambda environment)
+      (compute-fast-method-inline-lambda fast-generic-function fast-method lambda environment)
       initargs))))
 
-(defmethod compute-method-inline-lambda
-    ((generic-function fast-generic-function)
-     (method fast-method)
-     lambda
-     environment)
+(defun compute-fast-method-inline-lambda
+    (fast-generic-function fast-method lambda environment)
+  (declare (ignore fast-method))
   (destructuring-bind (lambda-symbol lambda-list &rest body) lambda
     (assert (eql lambda-symbol 'lambda))
     (multiple-value-bind (required optional rest-var keyword allow-other-keys-p auxiliary)
         (parse-ordinary-lambda-list lambda-list)
-      (declare (ignore allow-other-keys-p))
-      (let ((variables '()))
-        (dolist (info required)
-          (push (required-info-variable info) variables))
-        (dolist (info optional)
-          (push (optional-info-variable info) variables)
-          (when (optional-info-suppliedp info)
-            (push (optional-info-suppliedp info) variables)))
-        (unless (null rest-var)
-          (push rest-var variables))
-        (dolist (info keyword)
-          (push (keyword-info-variable info) variables)
-          (when (keyword-info-suppliedp info)
-            (push (keyword-info-suppliedp info) variables)))
-        (let ((n-declarations (position-if-not (starts-with 'declare) body))
-              (augmented-lambda-list
-                (append
-                 (reverse variables)
-                 (unparse-ordinary-lambda-list '() '() nil '() nil auxiliary))))
-          (trivial-macroexpand-all:macroexpand-all
-           `(lambda ,augmented-lambda-list
-              (declare (ignorable ,@(lambda-list-variables augmented-lambda-list)))
-              ,@(subseq body 0 n-declarations)
-              (block ,(block-name (generic-function-name generic-function))
-                ,@(subseq body n-declarations)))
-           environment))))))
+      (let ((n-declarations (position-if-not (starts-with 'declare) body))
+            (partially-flattened-lambda-list
+              `(,@(lambda-list-variables
+                   (unparse-ordinary-lambda-list
+                    required optional rest-var keyword allow-other-keys-p '()))
+                ,@(unparse-ordinary-lambda-list '() '() nil '() nil auxiliary))))
+        (trivial-macroexpand-all:macroexpand-all
+         `(lambda ,partially-flattened-lambda-list
+            (declare (ignorable ,@(mapcar #'required-info-variable required)))
+            ,@(subseq body 0 n-declarations)
+            (block ,(block-name (generic-function-name fast-generic-function))
+              ,@(subseq body n-declarations)))
+         environment)))))
 
-(defmethod compute-generic-function-inline-lambda
-    ((fast-generic-function fast-generic-function) applicable-methods)
+(defmethod fast-generic-function-lambda
+    ((fast-generic-function fast-generic-function)
+     (static-call-signature static-call-signature)
+     &aux (applicable-methods
+           (compute-applicable-methods
+            fast-generic-function
+            (static-call-signature-prototypes static-call-signature))))
   (multiple-value-bind (required optional rest-var keyword allow-other-keys-p)
       (parse-ordinary-lambda-list (generic-function-lambda-list fast-generic-function))
     ;; The keywords of the effective method are the union of the keywords
@@ -227,15 +217,4 @@
                       `(,initform)
                       `(,initform ,(keyword-info-suppliedp g-info)))))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Optimization
 
-(defmethod fast-generic-function-lambda
-    ((fast-generic-function fast-generic-function)
-     (static-call-signature static-call-signature))
-  (compute-generic-function-inline-lambda
-   fast-generic-function
-   (compute-applicable-methods
-    fast-generic-function
-    (static-call-signature-prototypes static-call-signature))))
