@@ -23,7 +23,7 @@
         ;; If we are dealing with uninterned symbols, we strip any
         ;; non-alphanumeric characters.  This has the effect that
         ;; gensymification of gensyms doesn't just add more and more
-        ;; digits.
+        ;; digits and hypens.
         (let ((name (symbol-name symbol)))
           (gensymify (subseq name 0 (1+ (position-if #'alpha-char-p name :from-end t)))))
         (gensymify (symbol-name symbol))))

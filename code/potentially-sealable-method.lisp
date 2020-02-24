@@ -20,6 +20,7 @@
 (defmethod shared-initialize :after
     ((psm potentially-sealable-method)
      slot-names &key ((.method-properties. method-properties) '()) &allow-other-keys)
+  (declare (ignore slot-names))
   (dolist (method-property method-properties)
     (unless (validate-method-property psm method-property)
       (error "~@<~S is not a valid method property for the method ~S.~@:>"
@@ -32,6 +33,7 @@
      (psm potentially-sealable-method)
      lambda
      environment)
+  (declare (ignore environment))
   (multiple-value-bind (method-lambda initargs)
       (call-next-method)
     (values

@@ -13,6 +13,7 @@
 ;;; It is an error to change the class of a sealed metaobject.
 (defmethod change-class :around
     ((metaobject sealable-metaobject-mixin) new-class &key &allow-other-keys)
+  (declare (ignore new-class))
   (if (metaobject-sealed-p metaobject)
       (error "Attempt to change the class of the sealed metaobject ~S."
              metaobject)
@@ -38,6 +39,7 @@
 
 (defmethod change-class :around
     ((instance sealable-metaobject-instance) new-class &key &allow-other-keys)
+  (declare (ignore new-class))
   (error "Attempt to change the class of the sealable metaobject instance ~S."
          instance))
 

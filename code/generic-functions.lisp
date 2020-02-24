@@ -193,6 +193,8 @@ Examples:
 
 ;;; Internal Generic Functions
 
+(defgeneric seal-domain (generic-function domain))
+
 (defgeneric sealed-domains (generic-function))
 
 (defgeneric (setf sealed-domains) (value generic-function))
