@@ -24,10 +24,16 @@
 
    ;; Fast Generic Functions.
    (:file "fast-generic-function")
+
    (:module "sbcl" :if-feature :sbcl
     :components
     ((:file "system-class")
      (:file "seal-domain")))
-   (:module "default" :if-feature (:not (:or :sbcl))
+
+   (:module "ccl" :if-feature :ccl
+    :components
+    ((:file "seal-domain")))
+
+   (:module "default" :if-feature (:not (:or :sbcl :ccl))
     :components
     ((:file "seal-domain")))))
