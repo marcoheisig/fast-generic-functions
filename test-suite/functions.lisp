@@ -56,8 +56,8 @@
   (declare (integer a) (integer b))
   (crazy-next-method-caller a b))
 
-(assert (= (crazy-next-method-caller 5 6) 116))
-(assert (= (crazy-next-method-caller 1 2) 68))
+(assert (= (crazy-next-method-caller-user 5 6) 116))
+(assert (= (crazy-next-method-caller-user 1 2) 68))
 
 (defun keyword-function-user (x y)
   (keyword-function x :y y))

@@ -30,4 +30,4 @@
      (:file "seal-domain")))
    (:module "default" :if-feature (:not (:or :sbcl))
     :components
-    ())))
+    ((:file "seal-domain")))))
