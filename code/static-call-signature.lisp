@@ -9,10 +9,10 @@
 ;;; the call signature.
 
 (defclass static-call-signature ()
-  ((%type
+  ((%types
     :initarg :types
     :reader static-call-signature-types)
-   (%prototype
+   (%prototypes
     :initarg :prototypes
     :reader static-call-signature-prototypes)))
 
@@ -21,6 +21,13 @@
     (format stream "~S ~S"
             (static-call-signature-types scs)
             (static-call-signature-prototypes scs))))
+
+(defmethod make-load-form
+    ((static-call-signature static-call-signature) &optional environment)
+  (make-load-form-saving-slots
+   'static-call-signature
+   :slot-names '(%types %prototypes)
+   :environment environment))
 
 (defmethod compute-static-call-signatures
     ((sgf sealable-generic-function)

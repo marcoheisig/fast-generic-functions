@@ -20,7 +20,7 @@
    (:file "sealable-class")
    (:file "potentially-sealable-method")
    (:file "sealable-generic-function")
-   (:file "compute-static-call-signatures")
+   (:file "static-call-signature")
 
    ;; Fast Generic Functions.
    (:file "fast-generic-function")

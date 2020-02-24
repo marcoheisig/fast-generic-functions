@@ -16,6 +16,10 @@
     ((method fast-method) (property (eql :inlineable)))
   t)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Expanding Effective Methods
+
 (defmethod make-method-lambda :around
     ((fast-generic-function generic-function)
      (fast-method fast-method)
@@ -222,3 +226,16 @@
                   (if (null (keyword-info-suppliedp m-info))
                       `(,initform)
                       `(,initform ,(keyword-info-suppliedp g-info)))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Optimization
+
+(defmethod fast-generic-function-lambda
+    ((fast-generic-function fast-generic-function)
+     (static-call-signature static-call-signature))
+  (compute-generic-function-inline-lambda
+   fast-generic-function
+   (compute-applicable-methods
+    fast-generic-function
+    (static-call-signature-prototypes static-call-signature))))

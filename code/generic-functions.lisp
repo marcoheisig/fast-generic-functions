@@ -203,4 +203,4 @@ Examples:
 
 (defgeneric compute-generic-function-inline-lambda (generic-function applicable-methods))
 
-(defgeneric optimize-fast-generic-function-call (generic-function static-call-signature arity))
+(defgeneric fast-generic-function-lambda (generic-function static-call-signature))
