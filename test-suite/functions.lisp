@@ -30,6 +30,8 @@
   (declare (list list))
   (generic-find item list))
 
+(assert (= 42 (generic-find-user 42 '(1 3 17 42 9))))
+
 (defun generic-+-user-1 (x y z)
   (declare (double-float x y z))
   (generic-+ x y z))
@@ -42,13 +44,23 @@
   (declare (single-float x y z))
   (generic-* x y z))
 
+(assert (= (generic-*-user 5.0 6.0 7.0) 210.0))
+
 (defun rest-args-user (x y z)
   (declare (single-float x y z))
   (rest-args x y z z z))
+
+(assert (= (rest-args-user 5.0 6.0 7.0) 14))
 
 (defun crazy-next-method-caller-user (a b)
   (declare (integer a) (integer b))
   (crazy-next-method-caller a b))
 
-(defun keyword-function-user ()
-  (keyword-function 1 :y 2))
+(assert (= (crazy-next-method-caller 5 6) 116))
+(assert (= (crazy-next-method-caller 1 2) 68))
+
+(defun keyword-function-user (x y)
+  (keyword-function x :y y))
+
+(assert (equal (keyword-function-user 8 3) '(8 3 nil (8 3 4))))
+(assert (equal (keyword-function-user 1 2) '(1 2 nil (1 2 4))))
