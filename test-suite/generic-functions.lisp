@@ -16,3 +16,6 @@
 
 (defgeneric crazy-next-method-caller (a b)
   (:generic-function-class fast-generic-function))
+
+(defgeneric keyword-function (x &key y z)
+  (:generic-function-class fast-generic-function))

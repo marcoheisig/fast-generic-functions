@@ -9,6 +9,8 @@
 (defmethod generic-find (elt (vector vector) &key (test #'eql))
   (cl:find elt vector :test test))
 
+(seal-domain #'generic-find '(t sequence))
+
 ;;; GENERIC-BINARY-+
 
 (defmethod generic-binary-+ :around ((a number) (b number))
@@ -42,6 +44,8 @@
   (print '(double-float t))
   (+ a b))
 
+(seal-domain #'generic-binary-+ '(number number))
+
 ;;; GENERIC-BINARY-*
 
 (defmethod generic-binary-* ((a double-float) (b double-float))
@@ -50,10 +54,14 @@
 (defmethod generic-binary-* ((a single-float) (b single-float))
   (* a b))
 
+(seal-domain #'generic-binary-* '(number number))
+
 ;;; REST-ARGS
 
 (defmethod rest-args (a1 (a2 number) &rest rest)
   (+ a1 a2 (length rest)))
+
+(seal-domain #'rest-args '(t number))
 
 ;;; CRAZY-NEXT-METHOD-CALLER
 
@@ -66,9 +74,14 @@
 (defmethod crazy-next-method-caller ((a integer) (b integer))
   (call-next-method (+ b 2) (+ a 7)))
 
-(seal-domain #'generic-find '(t sequence))
-(seal-domain #'generic-binary-+ '(number number))
-(seal-domain #'generic-binary-* '(number number))
-(seal-domain #'rest-args '(t number))
 (seal-domain #'crazy-next-method-caller '(number number))
 
+;;; KEYWORD-FUNCTION
+
+(defmethod keyword-function ((x integer) &key y z)
+  (list x y z (call-next-method x :y y)))
+
+(defmethod keyword-function ((x real) &key (y 3) (z 4))
+  (list x y z))
+
+(seal-domain #'keyword-function '(real))

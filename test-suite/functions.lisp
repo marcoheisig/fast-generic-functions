@@ -49,3 +49,6 @@
 (defun crazy-next-method-caller-user (a b)
   (declare (integer a) (integer b))
   (crazy-next-method-caller a b))
+
+(defun keyword-function-user ()
+  (keyword-function 1 :y 2))
