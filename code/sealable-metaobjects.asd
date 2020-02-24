@@ -27,7 +27,7 @@
    (:module "sbcl" :if-feature :sbcl
     :components
     ((:file "system-class")
-     (:file "inlining")))
+     (:file "seal-domain")))
    (:module "default" :if-feature (:not (:or :sbcl))
     :components
     ())))
