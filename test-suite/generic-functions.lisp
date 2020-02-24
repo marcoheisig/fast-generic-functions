@@ -14,3 +14,5 @@
   (:argument-precedence-order a2 a1)
   (:generic-function-class fast-generic-function))
 
+(defgeneric crazy-next-method-caller (a b)
+  (:generic-function-class fast-generic-function))

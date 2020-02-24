@@ -53,16 +53,17 @@
           (push (keyword-info-variable info) variables)
           (when (keyword-info-suppliedp info)
             (push (keyword-info-suppliedp info) variables)))
-        (let ((augmented-lambda-list
+        (let ((n-declarations (position-if-not (starts-with 'declare) body))
+              (augmented-lambda-list
                 (append
                  (reverse variables)
                  (unparse-ordinary-lambda-list '() '() nil '() nil auxiliary))))
           (trivial-macroexpand-all:macroexpand-all
            `(lambda ,augmented-lambda-list
               (declare (ignorable ,@(lambda-list-variables augmented-lambda-list)))
-              ,@(subseq body 0 (position-if-not (starts-with 'declare) body))
+              ,@(subseq body 0 n-declarations)
               (block ,(block-name (generic-function-name generic-function))
-                ,@(subseq body (position-if-not (starts-with 'declare) body))))
+                ,@(subseq body n-declarations)))
            environment))))))
 
 (defmethod compute-generic-function-inline-lambda
@@ -118,7 +119,19 @@
                  next-methods
                  ',lambda-list
                  ',method-class)))
-     ,form))
+     ,(wrap-in-reinitialize-arguments form lambda-list)))
+
+(defun wrap-in-reinitialize-arguments (form lambda-list)
+  (let ((anonymized-lambda-list
+          (anonymize-ordinary-lambda-list lambda-list)))
+    `(flet ((reinitialize-arguments ,anonymized-lambda-list
+              ,@(mapcar
+                 (lambda (place value)
+                   `(setf ,place ,value))
+                 (lambda-list-variables lambda-list)
+                 (lambda-list-variables anonymized-lambda-list))))
+       (declare (ignorable #'reinitialize-arguments))
+       ,form)))
 
 (defun expand-call-method (method next-methods lambda-list method-class)
   (wrap-in-next-methods
@@ -160,7 +173,9 @@
          ,form)
       (wrap-in-next-methods
        `(flet ((next-method-p () t)
-               (call-next-method ()
+               (call-next-method (&rest args)
+                 (unless (null args)
+                   (apply #'reinitialize-arguments args))
                  (call-method ,(first next-methods) ,(rest next-methods))))
           (declare (ignorable #'next-method-p #'call-next-method))
           ,form)

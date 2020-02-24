@@ -55,7 +55,20 @@
 (defmethod rest-args (a1 (a2 number) &rest rest)
   (+ a1 a2 (length rest)))
 
+;;; CRAZY-NEXT-METHOD-CALLER
+
+(defmethod crazy-next-method-caller ((a number) (b number))
+  (+ a b))
+
+(defmethod crazy-next-method-caller ((a real) (b real))
+  (call-next-method (* b 5) (* a 7)))
+
+(defmethod crazy-next-method-caller ((a integer) (b integer))
+  (call-next-method (+ b 2) (+ a 7)))
+
 (seal-domain #'generic-find '(t sequence))
 (seal-domain #'generic-binary-+ '(number number))
 (seal-domain #'generic-binary-* '(number number))
 (seal-domain #'rest-args '(t number))
+(seal-domain #'crazy-next-method-caller '(number number))
+
