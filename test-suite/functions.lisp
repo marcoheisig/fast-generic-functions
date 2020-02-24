@@ -16,7 +16,7 @@
 (defun generic-* (&rest things)
   (cond ((null things) 0)
         ((null (rest things)) (first things))
-        (t (reduce #'generic-binary-+ things))))
+        (t (reduce #'generic-binary-* things))))
 
 (define-compiler-macro generic-* (&rest things)
   (cond ((null things) 1)
