@@ -30,14 +30,6 @@
   (:method ((object t))
     (gensymify (princ-to-string object))))
 
-(defun system-class-p (class)
-  (with-accessors ((name class-name)) class
-    (and (symbolp name)
-         (not (null name))
-         (eql (symbol-package name)
-              (find-package "COMMON-LISP"))
-         (typep class '(not standard-class)))))
-
 (defun null-lexical-environement-p (environment)
   (declare (ignorable environment))
   (or (null environment)

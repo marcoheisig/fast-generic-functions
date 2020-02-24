@@ -3,7 +3,7 @@
 ;;; Checking for sealability.
 
 (defgeneric metaobject-sealable-p (metaobject)
-  (:method ((class class)) (system-class-p class))
+  (:method ((class class)) (eql class (find-class t)))
   (:method ((generic-function generic-function)) nil)
   (:method ((method method)) nil)
   (:method ((built-in-class built-in-class)) t)
@@ -24,7 +24,7 @@
 ;;; Checking for sealed-ness.
 
 (defgeneric metaobject-sealed-p (metaobject)
-  (:method ((class class)) (system-class-p class))
+  (:method ((class class)) (eql class (find-class t)))
   (:method ((generic-function generic-function)) nil)
   (:method ((method method)) nil)
   (:method ((built-in-class built-in-class)) t)
