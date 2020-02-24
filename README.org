@@ -56,8 +56,8 @@ recommend the following practices:
 This example shows how one can implement a generic version of =cl:+=.
 
 #+BEGIN_SRC lisp
-(sealable-metaobjects:define-sealable-generic-function generic-binary-+ (a b)
-  (:generic-function-class sealable-metaobjects:inlineable-standard-generic-function))
+(defgeneric generic-binary-+ (a b)
+  (:generic-function-class sealable-metaobjects:fast-generic-function))
 
 (defmethod generic-binary-+ ((a number) (b number))
   (+ a b))
@@ -66,7 +66,8 @@ This example shows how one can implement a generic version of =cl:+=.
   (+ (char-code a)
      (char-code b)))
 
-(sealable-metaobjects:seal-generic-function #'generic-binary-+)
+(sealable-metaobjects:seal-domain #'generic-binary-+ '(number number))
+(sealable-metaobjects:seal-domain #'generic-binary-+ '(character character))
 
 (defun generic-+ (&rest things)
   (cond ((null things) 0)
@@ -103,30 +104,12 @@ a regular generic function.  The only restriction is that new methods must
 not interfere with the behavior of methods that specialize on sealed types
 only.
 
-#+BEGIN_SRC lisp
-(defclass my-double-float ()
-  ((%value :initarg :value :reader my-double-float-value)))
-
-(defmethod generic-binary-+ ((a my-double-float) (b my-double-float))
-  (make-instance 'my-double-float
-    :value (+ (my-double-float-value a)
-              (my-double-float-value b))))
-
-(defun triple (x)
-  (generic-+ x x x))
-
-(my-double-float-value
- (triple
-  (make-instance 'my-double-float :value 5.0d0)))
-#+END_SRC
-
 *** Generic Find
 This example illustrates how one can implement a fast, generic version of =cl:find=.
 
 #+BEGIN_SRC lisp
-(sealable-metaobjects:define-sealable-generic-function generic-find (item sequence &key test)
-  ;; Only allow specialization on SEQUENCE, and not on ITEM.
-  (:argument-precedence-order sequence))
+(defgeneric generic-find (item sequence &key test)
+  (:generic-function-class sealable-metaobjects:fast-generic-function))
 
 (defmethod generic-find (elt (list list) &key (test #'eql))
   (and (member elt list :test test)
@@ -135,7 +118,8 @@ This example illustrates how one can implement a fast, generic version of =cl:fi
 (defmethod generic-find (elt (vector vector) &key (test #'eql))
   (cl:find elt vector :test test))
 
-(sealable-metaobjects:seal-generic-function #'generic-find)
+(sealable-metaobjects:seal-domain #'generic-find '(t list))
+(sealable-metaobjects:seal-domain #'generic-find '(t vector))
 
 (defun small-prime-p (x)
   (generic-find x '(2 3 5 7 11)))
