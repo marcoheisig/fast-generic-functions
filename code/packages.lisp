@@ -30,13 +30,8 @@
    #:validate-method-property
 
    #:sealable-class
-   #:sealable-class-instance
    #:sealable-generic-function
-   #:inlineable-generic-function
-   #:inlineable-standard-generic-function
    #:potentially-sealable-method
-   #:sealable-standard-class
-   #:sealable-standard-class-instance
    #:sealable-standard-generic-function
    #:potentially-sealable-standard-method
 
