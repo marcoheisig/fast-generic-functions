@@ -13,7 +13,7 @@
   (:metaclass funcallable-standard-class))
 
 (defmethod validate-method-property
-    ((method fast-method) (property (eql :inlineable)))
+    ((method fast-method) (property (eql 'inlineable)))
   t)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

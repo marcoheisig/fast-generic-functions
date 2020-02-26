@@ -36,5 +36,6 @@
    #:potentially-sealable-standard-method
 
    #:fast-generic-function
-   #:fast-method))
+   #:fast-method
+   #:inlineable))
 
