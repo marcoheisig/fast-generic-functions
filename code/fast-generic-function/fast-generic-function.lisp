@@ -83,6 +83,10 @@
       (trivial-macroexpand-all:macroexpand-all
        `(lambda ,anonymized-lambda-list
           (declare (ignorable ,@(lambda-list-variables anonymized-lambda-list)))
+          ,@(loop for type in (static-call-signature-types static-call-signature)
+                  for argument in anonymized-lambda-list
+                  collect
+                  `(declare (type ,type ,argument)))
           (let ((.gf. #',(generic-function-name fast-generic-function)))
             (declare (ignorable .gf.))
             #+sbcl(declare (sb-ext:disable-package-locks common-lisp:call-method))
