@@ -125,6 +125,7 @@
                  (lambda-list-variables lambda-list)
                  (lambda-list-variables anonymized-lambda-list))))
        (declare (ignorable #'reinitialize-arguments))
+       (declare (inline reinitialize-arguments))
        ,form)))
 
 (defun expand-call-method (method next-methods lambda-list method-class)
