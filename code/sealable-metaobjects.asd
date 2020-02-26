@@ -23,17 +23,9 @@
    (:file "static-call-signature")
 
    ;; Fast Generic Functions.
-   (:file "fast-generic-function")
-
-   (:module "sbcl" :if-feature :sbcl
+   (:module "fast-generic-function"
     :components
-    ((:file "system-class")
-     (:file "seal-domain")))
-
-   (:module "ccl" :if-feature :ccl
-    :components
-    ((:file "seal-domain")))
-
-   (:module "default" :if-feature (:not (:or :sbcl :ccl))
-    :components
-    ((:file "seal-domain")))))
+    ((:file "fast-generic-function")
+     (:file "default" :if-feature (:not (:or :sbcl :ccl)))
+     (:file "sbcl" :if-feature :sbcl)
+     (:file "ccl" :if-feature :ccl)))))
