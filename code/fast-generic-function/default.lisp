@@ -21,7 +21,23 @@
       form)))
 
 (defun compiler-typep (form type environment)
-  (constantp
-   `(unless (typep ,form ',type)
-      (tagbody label (go label)))
-   environment))
+  "Try to statically determine whether FORM is provably of TYPE in the
+supplied ENVIRONMENT.  A value of T means that the result of evaluating
+FORM is provably the supplied TYPE.  A value of NIL means that the result
+of evaluating FORM may or may not be of the supplied TYPE."
+  (or
+   ;; In a first step, we try to abuse CONSTANTP to perform a portable
+   ;; compile-time type query.  To do so, we generate a form that is
+   ;; constant if the type relation holds, and that diverges when the type
+   ;; relation does not hold.  Unfortunately, most implementations of
+   ;; CONSTANTP are not sophisticated for our trick to work.  But one day,
+   ;; this might suddenly start working really well.
+   (constantp
+    `(unless (typep ,form ',type)
+       (tagbody label (go label)))
+    environment)
+   ;; Our fallback solution.  We may not be able to check the type relation
+   ;; for arbitrary forms, but we certainly can check the type relation if
+   ;; FORM is a constant.
+   (and (constantp form)
+        (typep (eval form) type environment))))
