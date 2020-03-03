@@ -1,6 +1,6 @@
 (in-package #:sealable-metaobjects)
 
-(defvar *debug* nil)
+(defparameter *debug* nil)
 
 (defmacro debug-format (format-string &rest arguments)
   `(when *debug*

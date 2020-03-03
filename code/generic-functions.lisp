@@ -207,4 +207,10 @@ Examples:
 
 (defgeneric compute-generic-function-inline-lambda (generic-function applicable-methods))
 
-(defgeneric fast-generic-function-lambda (generic-function static-call-signature))
+(defgeneric fast-generic-function-lambda (generic-function static-call-signature)
+  (:method :around ((generic-function generic-function) static-call-signature)
+    (let ((form (call-next-method)))
+      (debug-format "~&Creating a fast generic function lambda for ~S:~%~S~%"
+                    (generic-function-name generic-function)
+                    form)
+      form)))
