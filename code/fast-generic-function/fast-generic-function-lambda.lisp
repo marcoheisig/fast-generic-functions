@@ -45,7 +45,11 @@
                 (#+sbcl
                  (sb-pcl::check-applicable-keywords (&rest args)
                    (declare (ignore args))
-                   `(progn sb-pcl::.valid-keys. sb-pcl::.keyargs-start. (values))))
+                   `(progn sb-pcl::.valid-keys. sb-pcl::.keyargs-start. (values)))
+                 #+sbcl
+                 (sb-pcl::%no-primary-method (&rest args)
+                   (declare (ignore args))
+                   `(error "No primary method for the generic function ~S." .gf.)))
               ,(wrap-in-call-method-macrolet
                 (compute-effective-method
                  fast-generic-function
