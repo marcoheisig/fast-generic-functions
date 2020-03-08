@@ -25,8 +25,12 @@
    ;; Fast Generic Functions.
    (:module "fast-generic-function"
     :components
-    ((:file "fast-generic-function")
-     (:file "fast-generic-function-lambda")
+    ((:file "generic-functions")
+     (:file "debug")
+     (:file "fast-generic-function")
+     (:file "compute-fast-lambda")
+     (:file "optimize-function-call")
+     ;(:file "caching")
      (:file "default" :if-feature (:not (:or :sbcl :ccl)))
      (:file "sbcl" :if-feature :sbcl)
      (:file "ccl" :if-feature :ccl)))))

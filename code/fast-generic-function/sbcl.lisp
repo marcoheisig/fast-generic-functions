@@ -14,4 +14,4 @@
         (debug-format "~&Creating deftransform for ~S~{ ~S~}~%" name types)
         (eval
          `(sb-c:deftransform ,name ((&rest args) (,@types &rest *))
-            (fast-generic-function-lambda #',name ',static-call-signature)))))))
+            (optimize-function-call #',name ',static-call-signature)))))))

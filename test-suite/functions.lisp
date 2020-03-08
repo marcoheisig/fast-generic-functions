@@ -60,6 +60,7 @@
 (assert (= (crazy-next-method-caller-user 1 2) 68))
 
 (defun keyword-function-user (x y)
+  (declare (integer x y))
   (keyword-function x :y y))
 
 (assert (equal (keyword-function-user 8 3) '(8 3 nil (8 3 4))))

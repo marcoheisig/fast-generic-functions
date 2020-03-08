@@ -35,8 +35,8 @@
       initargs))))
 
 (defun compute-fast-method-inline-lambda
-    (fast-generic-function fast-method lambda environment)
-  (declare (ignore fast-method))
+    (fast-generic-function method lambda environment)
+  (declare (ignore method))
   (destructuring-bind (lambda-symbol lambda-list &rest body) lambda
     (assert (eql lambda-symbol 'lambda))
     (multiple-value-bind (required optional rest-var keyword allow-other-keys-p auxiliary)
