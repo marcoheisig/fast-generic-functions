@@ -4,5 +4,6 @@
 
 (defgeneric optimize-function-call (generic-function static-call-signature))
 
-(defgeneric compute-fast-lambda (generic-function static-call-signature))
+(defgeneric compute-fast-lambda
+    (generic-function static-call-signature applicable-methods))
 

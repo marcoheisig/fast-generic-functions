@@ -3,10 +3,7 @@
 (defmethod compute-fast-lambda
     ((fast-generic-function fast-generic-function)
      (static-call-signature static-call-signature)
-     &aux (applicable-methods
-           (compute-applicable-methods
-            fast-generic-function
-            (static-call-signature-prototypes static-call-signature))))
+     applicable-methods)
   (multiple-value-bind (required optional rest-var keyword allow-other-keys-p)
       (parse-ordinary-lambda-list (generic-function-lambda-list fast-generic-function))
     ;; The keywords of the effective method are the union of the keywords
