@@ -49,9 +49,11 @@
 ;;; GENERIC-BINARY-*
 
 (defmethod generic-binary-* ((a double-float) (b double-float))
+  (declare (method-properties inlineable))
   (* a b))
 
 (defmethod generic-binary-* ((a single-float) (b single-float))
+  (declare (method-properties inlineable))
   (* a b))
 
 (seal-domain #'generic-binary-* '(number number))
@@ -66,12 +68,15 @@
 ;;; CRAZY-NEXT-METHOD-CALLER
 
 (defmethod crazy-next-method-caller ((a number) (b number))
+  (declare (method-properties inlineable))
   (+ a b))
 
 (defmethod crazy-next-method-caller ((a real) (b real))
+  (declare (method-properties inlineable))
   (call-next-method (* b 5) (* a 7)))
 
 (defmethod crazy-next-method-caller ((a integer) (b integer))
+  (declare (method-properties inlineable))
   (call-next-method (+ b 2) (+ a 7)))
 
 (seal-domain #'crazy-next-method-caller '(number number))

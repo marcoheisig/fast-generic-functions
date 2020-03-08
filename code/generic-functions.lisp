@@ -187,7 +187,9 @@ Examples:
 
 ;;; Method properties
 
-(defgeneric method-properties (method))
+(defgeneric method-properties (method)
+  (:method ((method method))
+    '()))
 
 (defgeneric validate-method-property (method method-property)
   (:method ((method method) (method-property t))

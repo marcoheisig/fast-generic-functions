@@ -1,11 +1,10 @@
 (in-package #:sealable-metaobjects)
 
-(defmethod compute-fast-lambda :around
+(defmethod optimize-function-call :around
     ((generic-function generic-function)
-     (static-call-signature static-call-signature)
-     applicable-methods)
+     (static-call-signature static-call-signature))
   (let ((form (call-next-method)))
-    (debug-format "~&Creating a fast effective method for ~S:~%~S~%"
+    (debug-format "~&Optimizing #'~S:~%~S~%"
                   (generic-function-name generic-function)
                   form)
     form))

@@ -17,12 +17,14 @@
          (excluded-types (mapcar #'specializer-type excluded-non-eql-specializers)))
     (map-class-prototypes
      (lambda (prototype)
-       (when (and (not (member prototype excluded-objects))
-                  (notany
-                   (lambda (excluded-type)
-                     (typep prototype excluded-type))
-                   excluded-types))
-         (return-from specializer-prototype (values prototype t))))
+       ;; The prototype must not be a member of the excluded objects.
+       (when (not (member prototype excluded-objects))
+         ;; The prototype must not be of one of the excluded types.
+         (when (notany
+                (lambda (excluded-type)
+                  (typep prototype excluded-type))
+                excluded-types)
+           (return-from specializer-prototype (values prototype t)))))
      class)
     (values nil nil)))
 

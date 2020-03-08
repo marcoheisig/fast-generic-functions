@@ -25,7 +25,7 @@
 (defmethod make-load-form
     ((static-call-signature static-call-signature) &optional environment)
   (make-load-form-saving-slots
-   'static-call-signature
+   static-call-signature
    :slot-names '(%types %prototypes)
    :environment environment))
 
