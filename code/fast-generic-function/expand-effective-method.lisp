@@ -1,73 +1,44 @@
 (in-package #:sealable-metaobjects)
 
-(defmethod compute-fast-lambda
-    ((fast-generic-function fast-generic-function)
-     (static-call-signature static-call-signature)
-     applicable-methods)
-  (multiple-value-bind (required optional rest-var keyword allow-other-keys-p)
-      (parse-ordinary-lambda-list (generic-function-lambda-list fast-generic-function))
-    ;; The keywords of the effective method are the union of the keywords
-    ;; of the generic function and the keywords of each applicable method.
-    (dolist (method applicable-methods)
-      (multiple-value-bind (req opt rst m-keyword m-allow-other-keys-p)
-          (parse-ordinary-lambda-list (method-lambda-list method))
-        (declare (ignore req opt rst))
-        (setf allow-other-keys-p (and allow-other-keys-p m-allow-other-keys-p))
-        (dolist (keyword-info m-keyword)
-          (pushnew keyword-info keyword :key #'keyword-info-keyword))))
-    ;; We anonymize all bindings of the inline lambda, to prevent
-    ;; accidental variable capture by any of the method lambdas.
-    (let ((anonymized-lambda-list
-            (anonymize-ordinary-lambda-list
-             (unparse-ordinary-lambda-list
-              required optional rest-var keyword allow-other-keys-p '()))))
-      ;; Create the inline lambda.
-      (trivial-macroexpand-all:macroexpand-all
-       `(lambda ,anonymized-lambda-list
-          (declare (ignorable ,@(lambda-list-variables anonymized-lambda-list)))
-          ,@(loop for type in (static-call-signature-types static-call-signature)
-                  for argument in anonymized-lambda-list
-                  collect
-                  `(declare (type ,type ,argument)))
-          (let ((.gf. #',(generic-function-name fast-generic-function)))
-            (declare (ignorable .gf.))
-            #+sbcl(declare (sb-ext:disable-package-locks common-lisp:call-method))
-            #+sbcl(declare (sb-ext:disable-package-locks common-lisp:make-method))
-            #+sbcl(declare (sb-ext:disable-package-locks sb-pcl::check-applicable-keywords))
-            (macrolet
-                (;; SBCL introduces explicit keyword argument checking into
-                 ;; the effective method.  Since we do our own checking, we
-                 ;; can safely disable it.  However, we touch the relevant
-                 ;; variables to prevent unused variable warnings.
-                 #+sbcl
-                 (sb-pcl::check-applicable-keywords (&rest args)
-                   (declare (ignore args))
-                   `(progn sb-pcl::.valid-keys. sb-pcl::.keyargs-start. (values)))
-                 ;; SBCL introduces a magic form to report when there are
-                 ;; no primary methods.  The problem is that that form
-                 ;; contains a reference to the literal generic function,
-                 ;; which is not necessarily an externalizable object.  Our
-                 ;; solution is to replace it with something portable.
-                 #+sbcl
-                 (sb-pcl::%no-primary-method (&rest args)
-                   (declare (ignore args))
-                   `(error "No primary method for the generic function ~S." .gf.)))
-              ,(wrap-in-call-method-macrolet
-                (compute-effective-method
-                 fast-generic-function
-                 (generic-function-method-combination fast-generic-function)
-                 applicable-methods)
-                anonymized-lambda-list
-                (or (class-name (generic-function-method-class fast-generic-function))
-                    (find-class 'fast-method))))))))))
+(defun expand-effective-method-body
+    (effective-method generic-function lambda-list)
+  (trivial-macroexpand-all:macroexpand-all
+   `(let ((.gf. #',(generic-function-name generic-function)))
+      (declare (ignorable .gf.))
+      #+sbcl(declare (sb-ext:disable-package-locks common-lisp:call-method))
+      #+sbcl(declare (sb-ext:disable-package-locks common-lisp:make-method))
+      #+sbcl(declare (sb-ext:disable-package-locks sb-pcl::check-applicable-keywords))
+      (macrolet
+          (;; SBCL introduces explicit keyword argument checking into
+           ;; the effective method.  Since we do our own checking, we
+           ;; can safely disable it.  However, we touch the relevant
+           ;; variables to prevent unused variable warnings.
+           #+sbcl
+           (sb-pcl::check-applicable-keywords (&rest args)
+             (declare (ignore args))
+             `(progn sb-pcl::.valid-keys. sb-pcl::.keyargs-start. (values)))
+           ;; SBCL introduces a magic form to report when there are
+           ;; no primary methods.  The problem is that that form
+           ;; contains a reference to the literal generic function,
+           ;; which is not necessarily an externalizable object.  Our
+           ;; solution is to replace it with something portable.
+           #+sbcl
+           (sb-pcl::%no-primary-method (&rest args)
+             (declare (ignore args))
+             `(error "No primary method for the generic function ~S." .gf.)))
+        ,(wrap-in-call-method-macrolet
+          effective-method
+          generic-function
+          lambda-list)))))
 
-(defun wrap-in-call-method-macrolet (form lambda-list method-class)
+(defun wrap-in-call-method-macrolet (form generic-function lambda-list)
   `(macrolet ((call-method (method &optional next-methods)
                 (expand-call-method
                  method
                  next-methods
                  ',lambda-list
-                 ',method-class)))
+                 ',(class-name
+                    (generic-function-method-class generic-function)))))
      ,(wrap-in-reinitialize-arguments form lambda-list)))
 
 (defun wrap-in-reinitialize-arguments (form lambda-list)

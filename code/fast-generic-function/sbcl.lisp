@@ -14,4 +14,5 @@
         (debug-format "~&Creating deftransform for ~S~{ ~S~}~%" name types)
         (eval
          `(sb-c:deftransform ,name ((&rest args) (,@types &rest *))
-            (optimize-function-call #',name ',static-call-signature)))))))
+            (or (optimize-function-call #',name ',static-call-signature)
+                (sb-c::give-up-ir1-transform))))))))

@@ -28,7 +28,7 @@
     ((:file "generic-functions")
      (:file "debug")
      (:file "fast-generic-function")
-     (:file "compute-fast-lambda")
+     (:file "expand-effective-method")
      (:file "optimize-function-call")
      ;(:file "caching")
      (:file "default" :if-feature (:not (:or :sbcl :ccl)))
