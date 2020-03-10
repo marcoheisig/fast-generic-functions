@@ -30,7 +30,6 @@
      (:file "fast-generic-function")
      (:file "expand-effective-method")
      (:file "optimize-function-call")
-     ;(:file "caching")
      (:file "default" :if-feature (:not (:or :sbcl :ccl)))
      (:file "sbcl" :if-feature :sbcl)
      (:file "ccl" :if-feature :ccl)))))
