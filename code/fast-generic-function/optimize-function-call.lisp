@@ -78,17 +78,19 @@
     `(lambda ,(if flatten-arguments
                   (lambda-list-variables anonymized-lambda-list)
                   anonymized-lambda-list)
+       (declare (optimize (safety 0)))
        ,@(loop for type in (static-call-signature-types static-call-signature)
                for argument in anonymized-lambda-list
                collect `(declare (ignorable ,argument))
                collect `(declare (type ,type ,argument)))
-       ,(expand-effective-method-body
-         (compute-effective-method
-          generic-function
-          (generic-function-method-combination generic-function)
-          applicable-methods)
-         generic-function
-         anonymized-lambda-list))))
+       (locally (declare (optimize (safety 1)))
+         ,(expand-effective-method-body
+           (compute-effective-method
+            generic-function
+            (generic-function-method-combination generic-function)
+            applicable-methods)
+           generic-function
+           anonymized-lambda-list)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
