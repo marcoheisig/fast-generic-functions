@@ -90,19 +90,21 @@
 ;;;
 ;;; Effective Method Caching
 
-(defvar *effective-method-cache* (make-hash-table :test #'equal))
+(defvar *direct-effective-method-cache* (make-hash-table :test #'equal))
+(defvar *flattened-effective-method-cache* (make-hash-table :test #'equal))
 
 (declaim (ftype (function (t t t) function) lookup-effective-method))
 (defun lookup-effective-method
     (generic-function static-call-signature flatten-arguments)
-  (let ((key (list* generic-function
-                    flatten-arguments
-                    (static-call-signature-prototypes static-call-signature))))
+  (let ((key (list* generic-function (static-call-signature-types static-call-signature)))
+        (table (if flatten-arguments
+                   *flattened-effective-method-cache*
+                   *direct-effective-method-cache*)))
     (multiple-value-bind (value present-p)
-        (gethash key *effective-method-cache*)
+        (gethash key table)
       (if present-p
           value
-          (setf (gethash key *effective-method-cache*)
+          (setf (gethash key table)
                 (compile nil (effective-method-lambda
                               generic-function
                               static-call-signature
