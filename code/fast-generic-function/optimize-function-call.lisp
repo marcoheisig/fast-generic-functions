@@ -22,20 +22,22 @@
              `(lambda ,anonymized-lambda-list
                 (funcall
                  (load-time-value
-                  (lookup-effective-method
-                   #',(generic-function-name fast-generic-function)
-                   ',static-call-signature
-                   t))
+                  (the function
+                       (lookup-effective-method
+                        #',(generic-function-name fast-generic-function)
+                        ',static-call-signature
+                        t)))
                  ,@(lambda-list-variables anonymized-lambda-list)))))
           ;; Eliminate the dispatch function.
           ((externalizable-object-p static-call-signature)
            `(lambda (&rest args)
               (apply
                (load-time-value
-                (lookup-effective-method
-                 #',(generic-function-name fast-generic-function)
-                 ',static-call-signature
-                 nil))
+                (the function
+                     (lookup-effective-method
+                      #',(generic-function-name fast-generic-function)
+                      ',static-call-signature
+                      nil)))
                args)))
           ;; Give up.
           (t nil))))
@@ -99,7 +101,8 @@
 (defvar *direct-effective-method-cache* (make-hash-table :test #'equal))
 (defvar *flattened-effective-method-cache* (make-hash-table :test #'equal))
 
-(declaim (ftype (function (t t t) function) lookup-effective-method))
+(declaim (ftype (function * function) lookup-effective-method))
+
 (defun lookup-effective-method
     (generic-function static-call-signature flatten-arguments)
   (let ((key (list* generic-function (static-call-signature-types static-call-signature)))
