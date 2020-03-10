@@ -14,7 +14,8 @@
            (every #'inlineable-method-p applicable-methods)
            (effective-method-lambda fast-generic-function static-call-signature nil))
           ;; Inline only the optional/keyword parsing step.
-          ((and (keyword-generic-function-p fast-generic-function)
+          ((and (or (keyword-generic-function-p fast-generic-function)
+                    (optional-generic-function-p fast-generic-function))
                 (externalizable-object-p static-call-signature))
            (let ((anonymized-lambda-list
                    (anonymize-ordinary-lambda-list effective-method-lambda-list)))
@@ -44,6 +45,9 @@
 
 (defun keyword-generic-function-p (generic-function)
   (member '&key (generic-function-lambda-list generic-function)))
+
+(defun optional-generic-function-p (generic-function)
+  (member '&optional (generic-function-lambda-list generic-function)))
 
 (defun compute-effective-method-lambda-list (generic-function applicable-methods)
   (multiple-value-bind (required optional rest-var keyword allow-other-keys-p)
