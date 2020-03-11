@@ -27,6 +27,7 @@
     :components
     ((:file "generic-functions")
      (:file "debug")
+     (:file "fast-method")
      (:file "fast-generic-function")
      (:file "expand-effective-method")
      (:file "optimize-function-call")
