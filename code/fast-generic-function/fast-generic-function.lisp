@@ -7,7 +7,8 @@
     :initform nil)))
 
 (defclass fast-generic-function (sealable-standard-generic-function)
-  ()
+  ((%full-effective-method-cache :initform '() :accessor full-effective-method-cache)
+   (%flat-effective-method-cache :initform '() :accessor flat-effective-method-cache))
   (:default-initargs
    :method-class (find-class 'fast-method))
   (:metaclass funcallable-standard-class))
@@ -15,10 +16,6 @@
 (defmethod validate-method-property
     ((method fast-method) (property (eql 'inlineable)))
   t)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;; Expanding Effective Methods
 
 (defmethod make-method-lambda :around
     ((fast-generic-function generic-function)

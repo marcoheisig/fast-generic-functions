@@ -3,53 +3,44 @@
 (defmethod optimize-function-call
     ((fast-generic-function fast-generic-function)
      (static-call-signature static-call-signature))
-  (let* ((applicable-methods
-           (compute-applicable-methods
-            fast-generic-function
-            (static-call-signature-prototypes static-call-signature)))
-         (effective-method-lambda-list
-           (compute-effective-method-lambda-list
-            fast-generic-function applicable-methods)))
+  (let ((applicable-methods
+          (compute-applicable-methods
+           fast-generic-function
+           (static-call-signature-prototypes static-call-signature))))
     (cond (;; Inline the entire effective method.
            (every #'inlineable-method-p applicable-methods)
            (effective-method-lambda fast-generic-function static-call-signature nil))
           ;; Inline only the optional/keyword parsing step.
-          ((and (or (keyword-generic-function-p fast-generic-function)
-                    (optional-generic-function-p fast-generic-function))
-                (externalizable-object-p static-call-signature))
-           (let ((anonymized-lambda-list
-                   (anonymize-ordinary-lambda-list effective-method-lambda-list)))
-             `(lambda ,anonymized-lambda-list
+          ((and (externalizable-object-p static-call-signature)
+                (intersection (generic-function-lambda-list fast-generic-function)
+                              '(&optional &key &rest)))
+           (let ((lambda-list
+                   (anonymize-ordinary-lambda-list
+                    (compute-effective-method-lambda-list
+                     fast-generic-function applicable-methods))))
+             `(lambda ,lambda-list
                 (funcall
                  (load-time-value
                   (the function
-                       (lookup-effective-method
+                       (lookup-flat-effective-method
                         #',(generic-function-name fast-generic-function)
-                        ',static-call-signature
-                        t)))
-                 ,@(lambda-list-variables anonymized-lambda-list)))))
+                        ',static-call-signature)))
+                 ,@(lambda-list-variables lambda-list)))))
           ;; Eliminate the dispatch function.
           ((externalizable-object-p static-call-signature)
            `(lambda (&rest args)
               (apply
                (load-time-value
                 (the function
-                     (lookup-effective-method
+                     (lookup-full-effective-method
                       #',(generic-function-name fast-generic-function)
-                      ',static-call-signature
-                      nil)))
+                      ',static-call-signature)))
                args)))
           ;; Give up.
           (t nil))))
 
 (defun inlineable-method-p (method)
   (member 'inlineable (method-properties method)))
-
-(defun keyword-generic-function-p (generic-function)
-  (member '&key (generic-function-lambda-list generic-function)))
-
-(defun optional-generic-function-p (generic-function)
-  (member '&optional (generic-function-lambda-list generic-function)))
 
 (defun compute-effective-method-lambda-list (generic-function applicable-methods)
   (multiple-value-bind (required optional rest-var keyword allow-other-keys-p)
@@ -96,25 +87,35 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
-;;; Effective Method Caching
+;;; Effective Method Lookup
 
-(defvar *direct-effective-method-cache* (make-hash-table :test #'equal))
-(defvar *flattened-effective-method-cache* (make-hash-table :test #'equal))
+(declaim (ftype (function * function) lookup-full-effective-method))
+(declaim (ftype (function * function) lookup-flat-effective-method))
 
-(declaim (ftype (function * function) lookup-effective-method))
+(defun lookup-full-effective-method
+    (generic-function static-call-signature)
+  (with-accessors ((alist full-effective-method-cache)) generic-function
+    (let* ((key (static-call-signature-types static-call-signature))
+           (entry (assoc key alist :test #'equal)))
+      (if (consp entry)
+          (cdr entry)
+          (let ((fn (compile nil (effective-method-lambda
+                                  generic-function
+                                  static-call-signature
+                                  nil))))
+            (push (cons key fn) alist)
+            fn)))))
 
-(defun lookup-effective-method
-    (generic-function static-call-signature flatten-arguments)
-  (let ((key (list* generic-function (static-call-signature-types static-call-signature)))
-        (table (if flatten-arguments
-                   *flattened-effective-method-cache*
-                   *direct-effective-method-cache*)))
-    (multiple-value-bind (value present-p)
-        (gethash key table)
-      (if present-p
-          value
-          (setf (gethash key table)
-                (compile nil (effective-method-lambda
-                              generic-function
-                              static-call-signature
-                              flatten-arguments)))))))
+(defun lookup-flat-effective-method
+    (generic-function static-call-signature)
+  (with-accessors ((alist flat-effective-method-cache)) generic-function
+    (let* ((key (static-call-signature-types static-call-signature))
+           (entry (assoc key alist :test #'equal)))
+      (if (consp entry)
+          (cdr entry)
+          (let ((fn (compile nil (effective-method-lambda
+                                  generic-function
+                                  static-call-signature
+                                  t))))
+            (push (cons key fn) alist)
+            fn)))))
