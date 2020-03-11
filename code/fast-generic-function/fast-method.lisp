@@ -4,13 +4,13 @@
   ((%lambda
     :initarg .lambda.
     :reader fast-method-lambda
-    :initform nil)))
+    :initform (required-argument '.lambda.))))
 
 (defmethod validate-method-property
     ((method fast-method) (property (eql 'inlineable)))
   t)
 
-(defmethod make-method-lambda
+(defmethod make-method-lambda :around
     ((generic-function generic-function)
      (fast-method fast-method)
      lambda
