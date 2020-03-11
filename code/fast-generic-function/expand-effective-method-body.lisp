@@ -61,6 +61,7 @@
     (coerce-to-fast-method method lambda-list method-class)
     lambda-list)
    next-methods
+   lambda-list
    method-class))
 
 (defun coerce-to-fast-method (method lambda-list method-class)
@@ -83,14 +84,15 @@
          (error "Cannot turn ~S into an inlineable method."
                 method))))
 
-(defun wrap-in-next-methods (form next-methods method-class)
+(defun wrap-in-next-methods (form next-methods lambda-list method-class)
   (if (null next-methods)
       `(flet ((next-method-p () nil)
               (call-next-method ()
-                (no-next-method
+                (apply
+                 #'no-next-method
                  .gf.
-                 (specializer-prototype
-                  (find-class ',method-class)))))
+                 (class-prototype (find-class ',method-class))
+                 ,@(lambda-list-apply-arguments lambda-list))))
          (declare (ignorable #'next-method-p #'call-next-method))
          ,form)
       (wrap-in-next-methods
@@ -102,6 +104,7 @@
           (declare (ignorable #'next-method-p #'call-next-method))
           ,form)
        (rest next-methods)
+       lambda-list
        method-class)))
 
 (defun call-fast-method-lambda (method lambda-list)

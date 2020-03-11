@@ -378,3 +378,16 @@ Can parse all but specialized lambda lists.
       (dolist (info auxiliary)
         (push (auxiliary-info-variable info) variables))
       (nreverse variables))))
+
+(defun lambda-list-apply-arguments (lambda-list)
+  (multiple-value-bind (required optional rest-var keyword)
+      (parse-ordinary-lambda-list lambda-list)
+    (append
+     (mapcar #'required-info-variable required)
+     (mapcar #'optional-info-variable optional)
+     (if rest-var
+         `(,rest-var)
+         `(,@(loop for info in keyword
+                   collect (keyword-info-keyword info)
+                   collect (keyword-info-variable info))
+           '())))))
