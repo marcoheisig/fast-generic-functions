@@ -1,9 +1,9 @@
 (in-package #:sealable-metaobjects)
 
 (defclass fast-method (potentially-sealable-standard-method)
-  ((%inline-lambda
-    :initarg .inline-lambda.
-    :reader fast-method-inline-lambda
+  ((%lambda
+    :initarg .lambda.
+    :reader fast-method-lambda
     :initform nil)))
 
 (defmethod validate-method-property
@@ -20,11 +20,11 @@
     (values
      method-lambda
      (list*
-      '.inline-lambda.
-      (compute-fast-method-inline-lambda generic-function fast-method lambda environment)
+      '.lambda.
+      (make-fast-method-lambda generic-function fast-method lambda environment)
       initargs))))
 
-(defun compute-fast-method-inline-lambda
+(defun make-fast-method-lambda
     (generic-function method lambda environment)
   (declare (ignore method))
   (destructuring-bind (lambda-symbol lambda-list &rest body) lambda
