@@ -10,7 +10,7 @@
     ((method fast-method) (property (eql 'inlineable)))
   t)
 
-(defmethod make-method-lambda :around
+(defmethod make-method-lambda
     ((generic-function generic-function)
      (fast-method fast-method)
      lambda
