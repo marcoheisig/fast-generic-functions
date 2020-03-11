@@ -29,7 +29,7 @@
      (:file "debug")
      (:file "fast-method")
      (:file "fast-generic-function")
-     (:file "expand-effective-method")
+     (:file "expand-effective-method-body")
      (:file "optimize-function-call")
      (:file "default" :if-feature (:not (:or :sbcl :ccl)))
      (:file "sbcl" :if-feature :sbcl)

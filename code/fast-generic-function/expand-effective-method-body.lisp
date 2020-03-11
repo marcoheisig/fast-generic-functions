@@ -17,11 +17,11 @@
            (sb-pcl::check-applicable-keywords (&rest args)
              (declare (ignore args))
              `(progn sb-pcl::.valid-keys. sb-pcl::.keyargs-start. (values)))
-           ;; SBCL introduces a magic form to report when there are
-           ;; no primary methods.  The problem is that that form
-           ;; contains a reference to the literal generic function,
-           ;; which is not necessarily an externalizable object.  Our
-           ;; solution is to replace it with something portable.
+           ;; SBCL introduces a magic form to report when there are no
+           ;; primary methods.  The problem is that this form contains a
+           ;; reference to the literal generic function, which is not an
+           ;; externalizable object.  Our solution is to replace it with
+           ;; something portable.
            #+sbcl
            (sb-pcl::%no-primary-method (&rest args)
              (declare (ignore args))
