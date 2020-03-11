@@ -11,7 +11,6 @@
   ((:file "packages")
    (:file "debug")
    (:file "utilities")
-   (:file "lambda-lists")
    (:file "generic-functions")
    (:file "specializer-prototype")
 
@@ -25,7 +24,8 @@
    ;; Fast Generic Functions.
    (:module "fast-generic-function"
     :components
-    ((:file "generic-functions")
+    ((:file "lambda-lists")
+     (:file "generic-functions")
      (:file "debug")
      (:file "fast-method")
      (:file "fast-generic-function")
