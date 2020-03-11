@@ -6,4 +6,3 @@
   (:default-initargs
    :method-class (find-class 'fast-method))
   (:metaclass funcallable-standard-class))
-

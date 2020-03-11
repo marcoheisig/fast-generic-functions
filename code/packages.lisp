@@ -38,5 +38,7 @@
 
    #:fast-generic-function
    #:fast-method
-   #:inlineable))
+   #:inlineable
+   #:optimize-function-call
+   #:no-primary-method))
 

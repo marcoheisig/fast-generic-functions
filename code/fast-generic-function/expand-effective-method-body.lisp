@@ -26,7 +26,7 @@
            #+sbcl
            (sb-pcl::%no-primary-method (&rest args)
              (declare (ignore args))
-             `(error "No primary method for the generic function ~S." .gf.)))
+             `(apply #'no-primary-method .gf. ,@',(lambda-list-apply-arguments lambda-list))))
         ,(wrap-in-call-method-macrolet
           effective-method
           generic-function
