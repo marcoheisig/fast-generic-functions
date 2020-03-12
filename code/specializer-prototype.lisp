@@ -42,15 +42,18 @@
     (labels ((visit-class (class)
                (unless (gethash class visited-classes)
                  (setf (gethash class visited-classes) t)
-                 ;; Surprisingly, some implementations don't always return
-                 ;; a CLASS-PROTOTYPE that is an instance of the given
-                 ;; class.
-                 (let ((prototype (class-prototype class)))
-                   (when (typep prototype class)
-                     (funcall function prototype)))
                  (loop for prototype in (gethash class *class-prototypes* '()) do
                    (funcall function prototype))
-                 (mapc #'visit-class (class-direct-subclasses class)))))
+                 (mapc #'visit-class (class-direct-subclasses class))
+                 ;; CLASS-PROTOTYPE is difficult to handle...
+                 (when (class-finalized-p class)
+                   (let ((prototype (class-prototype class)))
+                     ;; Surprisingly, some implementations don't always
+                     ;; return a CLASS-PROTOTYPE that is an instance of the
+                     ;; given class.  So we only scan the prototype if it is
+                     ;; actually valid.
+                     (when (typep prototype class)
+                       (funcall function prototype)))))))
       (visit-class class))))
 
 (defun register-class-prototype (prototype)
