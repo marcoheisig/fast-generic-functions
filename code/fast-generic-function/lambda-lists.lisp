@@ -336,14 +336,18 @@ Can parse all but specialized lambda lists.
   (make-instance 'optional-info
     :variable (gensymify (optional-info-variable info))
     :initform (optional-info-initform info)
-    :suppliedp (gensymify "SUPPLIEDP")))
+    :suppliedp (if (optional-info-suppliedp info)
+                   (gensymify (optional-info-suppliedp info))
+                   nil)))
 
 (defun anonymize-keyword-info (info)
   (make-instance 'keyword-info
     :variable (gensymify (keyword-info-variable info))
     :keyword (keyword-info-keyword info)
     :initform (keyword-info-initform info)
-    :suppliedp (gensymify "SUPPLIEDP")))
+    :suppliedp (if (keyword-info-suppliedp info)
+                   (gensymify (keyword-info-suppliedp info))
+                   nil)))
 
 (defun anonymize-auxiliary-info (info)
   (make-instance 'auxiliary-info

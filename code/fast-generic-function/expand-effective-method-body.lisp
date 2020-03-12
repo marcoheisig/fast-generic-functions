@@ -128,13 +128,15 @@
         ,@(loop for g-info in g-optional
                 for m-info in m-optional
                 append
-                (let ((initform
-                        `(if ,(optional-info-suppliedp g-info)
-                             ,(optional-info-variable g-info)
-                             ,(optional-info-initform m-info))))
-                  (if (null (optional-info-suppliedp m-info))
-                      `(,initform)
-                      `(,initform ,(optional-info-suppliedp g-info)))))
+                (if (null (optional-info-suppliedp g-info))
+                    `((optional-info-variable g-info))
+                    (let ((value
+                            `(if ,(optional-info-suppliedp g-info)
+                                 ,(optional-info-variable g-info)
+                                 ,(optional-info-initform m-info))))
+                      (if (null (optional-info-suppliedp m-info))
+                          `(,value)
+                          `(,value ,(optional-info-suppliedp g-info))))))
         ;; The rest argument.
         ,@(if (null m-rest-var)
               `()
@@ -144,11 +146,13 @@
                 for g-info = (find (keyword-info-keyword m-info) g-keyword
                                    :key #'keyword-info-keyword)
                 append
-                (let ((initform
-                        `(if ,(keyword-info-suppliedp g-info)
-                             ,(keyword-info-variable g-info)
-                             ,(keyword-info-initform m-info))))
-                  (if (null (keyword-info-suppliedp m-info))
-                      `(,initform)
-                      `(,initform ,(keyword-info-suppliedp g-info)))))))))
+                (if (null (keyword-info-suppliedp g-info))
+                    `(,(keyword-info-variable g-info))
+                    (let ((value
+                            `(if ,(keyword-info-suppliedp g-info)
+                                 ,(keyword-info-variable g-info)
+                                 ,(keyword-info-initform m-info))))
+                      (if (null (keyword-info-suppliedp m-info))
+                          `(,value)
+                          `(,value ,(keyword-info-suppliedp g-info))))))))))
 

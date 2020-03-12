@@ -42,21 +42,6 @@
 (defun inlineable-method-p (method)
   (member 'inlineable (method-properties method)))
 
-(defun compute-effective-method-lambda-list (generic-function applicable-methods)
-  (multiple-value-bind (required optional rest-var keyword allow-other-keys-p)
-      (parse-ordinary-lambda-list (generic-function-lambda-list generic-function))
-    ;; The keywords of the effective method are the union of the keywords
-    ;; of the generic function and the keywords of each applicable method.
-    (dolist (method applicable-methods)
-      (multiple-value-bind (req opt rst m-keyword m-allow-other-keys-p)
-          (parse-ordinary-lambda-list (method-lambda-list method))
-        (declare (ignore req opt rst))
-        (setf allow-other-keys-p (and allow-other-keys-p m-allow-other-keys-p))
-        (dolist (keyword-info m-keyword)
-          (pushnew keyword-info keyword :key #'keyword-info-keyword))))
-    (unparse-ordinary-lambda-list
-     required optional rest-var keyword allow-other-keys-p '())))
-
 (defun effective-method-lambda
     (generic-function static-call-signature flatten-arguments)
   (let* ((applicable-methods
@@ -84,6 +69,117 @@
             applicable-methods)
            generic-function
            anonymized-lambda-list)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;; Computing the Effective Method Lambda List
+
+(defun compute-effective-method-lambda-list (generic-function applicable-methods)
+  (multiple-value-bind (required optional rest-var keyword allow-other-keys)
+      (parse-ordinary-lambda-list (generic-function-lambda-list generic-function))
+    (let ((method-parses
+            (mapcar
+             (lambda (method)
+               (multiple-value-list
+                (parse-ordinary-lambda-list
+                 (method-lambda-list method))))
+             applicable-methods)))
+      (unparse-ordinary-lambda-list
+       (merge-required-infos required (mapcar #'first method-parses))
+       (merge-optional-infos optional (mapcar #'second method-parses))
+       rest-var
+       (merge-keyword-infos keyword (mapcar #'fourth method-parses))
+       (merge-allow-other-keys allow-other-keys (mapcar #'fifth method-parses))
+       '()))))
+
+(defun merge-required-infos (g-required m-requireds)
+  (dolist (m-required m-requireds g-required)
+    (assert (= (length m-required)
+               (length g-required)))))
+
+(defun merge-optional-infos (g-optional m-optionals)
+  (let ((n (length g-optional)))
+    (dolist (m-optional m-optionals)
+      (assert (= (length m-optional) n)))
+    (unless (zerop n)
+      (loop for g-info in g-optional
+            for m-infos in (apply #'mapcar #'list m-optionals)
+            collect
+            ;; Now we have two cases - the one is that at least one method
+            ;; cares about the suppliedp flag, the other one is that no
+            ;; method cares.  Even if a method doesn't reference the
+            ;; suppliedp flag itself, it may still need it to decide whether
+            ;; to supply its initform or not.  Because of this, the suppliedp
+            ;; parameter can only be discarded globally when the initforms of
+            ;; all methods are constant and equal.
+            (let ((global-initform (optional-info-initform (first m-infos)))
+                  (no-one-cares (not (optional-info-suppliedp (first m-infos)))))
+              (dolist (m-info m-infos)
+                (with-accessors ((variable optional-info-variable)
+                                 (initform optional-info-initform)
+                                 (suppliedp optional-info-suppliedp))
+                    m-info
+                  (unless (and (constantp initform)
+                               (equal initform global-initform)
+                               (not suppliedp))
+                    (setf no-one-cares nil))))
+              (if no-one-cares
+                  (make-instance 'optional-info
+                    :variable (optional-info-variable g-info)
+                    :initform global-initform)
+                  (make-instance 'optional-info
+                    :variable (optional-info-variable g-info)
+                    :initform nil
+                    :suppliedp (optional-info-suppliedp g-info))))))))
+
+(defun merge-keyword-infos (g-keyword m-keywords)
+  ;; First we assemble an alist whose keys are keywords and whose values
+  ;; are all method keyword info objects that read this keyword.
+  (let ((alist '()))
+    (dolist (g-info g-keyword)
+      (pushnew (list (keyword-info-keyword g-info)) alist))
+    (dolist (m-keyword m-keywords)
+      (dolist (m-info m-keyword)
+        (let* ((key (keyword-info-keyword m-info))
+               (entry (assoc key alist)))
+          (if (consp entry)
+              (push m-info (cdr entry))
+              (push (list key m-info) alist)))))
+    (loop for (key . m-infos) in alist
+          collect
+          ;; Merging keyword info objects is handled just like in the case
+          ;; of optional info objects above.
+          (let ((global-initform (keyword-info-initform (first m-infos)))
+                (no-one-cares (not (keyword-info-suppliedp (first m-infos))))
+                ;; Not actually g-info, but we need some place to grab a
+                ;; variable name form.
+                (g-info (or (find key g-keyword :key #'keyword-info-keyword)
+                            (first m-infos))))
+            (dolist (m-info m-infos)
+              (with-accessors ((initform keyword-info-initform)
+                               (suppliedp keyword-info-suppliedp))
+                  m-info
+                (unless (and (constantp initform)
+                             (equal initform global-initform)
+                             (not suppliedp))
+                  (setf no-one-cares nil))))
+            (if no-one-cares
+                (make-instance 'keyword-info
+                  :keyword key
+                  :variable (keyword-info-variable g-info)
+                  :initform global-initform)
+                (make-instance 'keyword-info
+                  :keyword key
+                  :variable (keyword-info-variable g-info)
+                  :initform nil
+                  :suppliedp (or (keyword-info-suppliedp g-info)
+                                 (gensymify "SUPPLIEDP"))))))))
+
+(defun merge-allow-other-keys (g-allow-other-keys m-allow-other-keys-list)
+  (reduce
+   (lambda (a b) (or a b))
+   m-allow-other-keys-list
+   :initial-value g-allow-other-keys))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
