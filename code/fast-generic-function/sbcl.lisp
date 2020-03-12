@@ -11,7 +11,6 @@
       (with-accessors ((types static-call-signature-types)
                        (prototypes static-call-signature-prototypes))
           static-call-signature
-        (debug-format "~&Creating deftransform for ~S~{ ~S~}~%" name types)
         (eval
          `(sb-c:deftransform ,name ((&rest args) (,@types &rest *))
             (or (optimize-function-call #',name ',static-call-signature)

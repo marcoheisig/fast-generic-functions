@@ -9,7 +9,6 @@
   :serial t
   :components
   ((:file "packages")
-   (:file "debug")
    (:file "utilities")
    (:file "generic-functions")
    (:file "specializer-prototype")
@@ -26,7 +25,6 @@
     :components
     ((:file "lambda-lists")
      (:file "generic-functions")
-     (:file "debug")
      (:file "fast-method")
      (:file "fast-generic-function")
      (:file "expand-effective-method-body")
