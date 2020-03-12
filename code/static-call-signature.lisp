@@ -47,21 +47,26 @@
                  :types types
                  :prototypes prototypes)
                static-call-signatures))
-       ;; Turn the list of specializers of each sealed method into a list of
-       ;; specializers of each argument.
+       ;; Transpose the list of specializers so that we operate on each
+       ;; argument instead of on each method.
        (apply #'mapcar #'list list-of-specializers)
        domain))
     static-call-signatures))
 
 (defun map-types-and-prototypes (fn specializers-list domain)
-  (labels ((rec (sl types prototypes)
+  (assert (= (length specializers-list) (length domain)))
+  (labels ((rec (sl domain types prototypes)
              (if (null sl)
                  (funcall fn (reverse types) (reverse prototypes))
-                 (loop for (type prototype) in (type-prototype-pairs (first sl) domain)
+                 (loop for (type prototype)
+                         in (type-prototype-pairs
+                             (first sl)
+                             (first domain))
                        do (rec (rest sl)
+                               (rest domain)
                                (cons type types)
                                (cons prototype prototypes))))))
-    (rec specializers-list '() '())))
+    (rec specializers-list domain '() '())))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
@@ -114,27 +119,26 @@
 (defun type-prototype-pairs (specializers domain)
   (let* ((*snode-table* (make-hash-table))
          (specializer-snodes (mapcar #'specializer-snode specializers))
-         (domain-snodes (mapcar #'specializer-snode domain)))
+         (domain-snode (specializer-snode domain)))
     ;; Initialize domain and specializer snodes.
     (dolist (snode specializer-snodes)
       (setf (snode-relevantp snode) t))
-    (dolist (snode domain-snodes)
-      (setf (snode-relevantp snode) t))
+    (setf (snode-relevantp domain-snode) t)
     ;; Now connect all snodes.
-    (labels ((visit (current relevant top)
+    (labels ((visit (current relevant)
                (unless (snode-visitedp current)
                  (setf (snode-visitedp current) t)
-                 (unless (eql current top)
+                 (unless (eql current domain)
                    (dolist (specializer
                             (specializer-direct-superspecializers
                              (snode-specializer current)))
                      (let ((super (specializer-snode specializer)))
                        (cond ((snode-relevantp super)
                               (snode-add-edge super relevant)
-                              (visit super super top))
+                              (visit super super))
                              (t
-                              (visit super relevant top)))))))))
-      (mapc #'visit specializer-snodes specializer-snodes domain-snodes))
+                              (visit super relevant)))))))))
+      (mapc #'visit specializer-snodes specializer-snodes))
     ;; Finally, build all pairs.
     (let ((pairs '()))
       (loop for snode being the hash-values of *snode-table* do
