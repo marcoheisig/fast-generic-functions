@@ -27,6 +27,10 @@
    #:specializer-prototype
    #:specializer-direct-superspecializers
 
+   #:static-call-signature
+   #:static-call-signature-types
+   #:static-call-signature-prototypes
+
    #:method-properties
    #:validate-method-property
 
