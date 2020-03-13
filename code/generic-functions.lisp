@@ -121,29 +121,6 @@
   (:method ((eql-specializer eql-specializer))
     `(eql ,(eql-specializer-object eql-specializer))))
 
-(defgeneric specializer-prototype (specializer &optional excluded-specializers)
-  (:documentation
-   "Returns an object that is of the type indicated by SPECIALIZER, but not
-of any of the types indicated the optionally supplied
-EXCLUDED-SPECIALIZERS.  Returns a secondary value of T if such an object
-could be determined, and NIL if no such object was found.
-
-Examples:
- (specializer-prototype
-   (find-class 'double-float))
- => 5.0d0, T
-
- (specializer-prototype
-   (find-class 'double-float)
-   (list (intern-eql-specializer 5.0d0)))
- => 6.0d0, T
-
- (specializer-prototype
-   (find-class 'real)
-   (list (find-class 'rational) (find-class 'float)))
- => NIL, NIL
-"))
-
 (defgeneric specializer-intersectionp (specializer-1 specializer-2)
   (:method ((class-1 class) (class-2 class))
     (multiple-value-bind (disjointp success)
@@ -178,14 +155,6 @@ Examples:
   (assert (= (length domain-1)
              (length domain-2)))
   (every #'specializer-subtypep domain-1 domain-2))
-
-(defgeneric specializer-direct-superspecializers (specializer)
-  (:method ((class class))
-    (class-direct-superclasses class))
-  (:method ((eql-specializer eql-specializer))
-    (list
-     (class-of
-      (eql-specializer-object eql-specializer)))))
 
 ;;; Method properties
 

@@ -11,7 +11,6 @@
   ((:file "packages")
    (:file "utilities")
    (:file "generic-functions")
-   (:file "specializer-prototype")
 
    ;; Sealable Metaobjects.
    (:file "sealable-metaobject-mixin")
@@ -22,8 +21,9 @@
    ;; Fast Generic Functions.
    (:module "fast-generic-function"
     :components
-    ((:file "lambda-lists")
-     (:file "generic-functions")
+    ((:file "generic-functions")
+     (:file "lambda-lists")
+     (:file "specializer-prototype")
      (:file "static-call-signature")
      (:file "fast-method")
      (:file "fast-generic-function")
