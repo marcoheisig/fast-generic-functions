@@ -18,13 +18,13 @@
    (:file "sealable-class")
    (:file "potentially-sealable-method")
    (:file "sealable-generic-function")
-   (:file "static-call-signature")
 
    ;; Fast Generic Functions.
    (:module "fast-generic-function"
     :components
     ((:file "lambda-lists")
      (:file "generic-functions")
+     (:file "static-call-signature")
      (:file "fast-method")
      (:file "fast-generic-function")
      (:file "expand-effective-method-body")

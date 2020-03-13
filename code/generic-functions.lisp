@@ -87,6 +87,8 @@
   (:method ((method method))
     (seal-metaobject method)))
 
+(defgeneric seal-domain (generic-function domain))
+
 ;;; Working with specializers.
 
 (defgeneric specializer-sealable-p (specializer)
@@ -195,12 +197,6 @@ Examples:
   (:method ((method method) (method-property t))
     nil))
 
-;;; Internal Generic Functions
-
-(defgeneric seal-domain (generic-function domain))
-
 (defgeneric sealed-domains (generic-function))
 
 (defgeneric (setf sealed-domains) (value generic-function))
-
-(defgeneric compute-static-call-signatures (generic-function domain))

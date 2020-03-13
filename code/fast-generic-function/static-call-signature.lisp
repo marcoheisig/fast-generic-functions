@@ -29,6 +29,14 @@
    :slot-names '(%types %prototypes)
    :environment environment))
 
+(defmethod externalizable-object-p
+    ((static-call-signature static-call-signature))
+  (and
+   (every #'externalizable-object-p
+          (static-call-signature-types static-call-signature))
+   (every #'externalizable-object-p
+          (static-call-signature-prototypes static-call-signature))))
+
 (defmethod compute-static-call-signatures
     ((sgf sealable-generic-function)
      (domain list))
