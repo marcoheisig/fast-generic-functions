@@ -1,4 +1,4 @@
-(in-package #:sealable-metaobjects)
+(in-package #:fast-generic-functions)
 
 (defclass fast-generic-function (sealable-standard-generic-function)
   ((%full-effective-method-cache :initform '() :accessor full-effective-method-cache)

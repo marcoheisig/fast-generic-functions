@@ -19,30 +19,30 @@
    #:seal-class
    #:seal-generic-function
    #:seal-method
-   #:seal-specializer
    #:seal-domain
-   #:sealed-domains
+   #:seal-specializer
 
    #:specializer-type
    #:specializer-prototype
    #:specializer-direct-superspecializers
+   #:specializer-intersectionp
+   #:specializer-subtypep
+   #:domain-intersectionp
+   #:domain-subtypep
+
+   #:method-properties
+   #:validate-method-property
 
    #:static-call-signature
    #:static-call-signature-types
    #:static-call-signature-prototypes
 
-   #:method-properties
-   #:validate-method-property
-
+   #:sealed-domains
+   #:compute-static-call-signatures
+   #:externalizable-object-p
    #:sealable-class
    #:sealable-generic-function
-   #:potentially-sealable-method
    #:sealable-standard-generic-function
-   #:potentially-sealable-standard-method
-
-   #:fast-generic-function
-   #:fast-method
-   #:inlineable
-   #:optimize-function-call
-   #:no-primary-method))
+   #:potentially-sealable-method
+   #:potentially-sealable-standard-method))
 

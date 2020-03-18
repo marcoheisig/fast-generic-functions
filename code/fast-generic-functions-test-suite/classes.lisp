@@ -1,4 +1,4 @@
-(in-package #:sealable-metaobjects-test-suite)
+(in-package #:fast-generic-functions-test-suite)
 
 (defstruct point
   (x nil :type number)

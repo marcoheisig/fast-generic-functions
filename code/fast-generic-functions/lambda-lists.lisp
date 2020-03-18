@@ -1,4 +1,4 @@
-(in-package #:sealable-metaobjects)
+(in-package #:fast-generic-functions)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;

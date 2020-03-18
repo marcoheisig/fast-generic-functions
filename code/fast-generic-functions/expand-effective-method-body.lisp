@@ -1,4 +1,4 @@
-(in-package #:sealable-metaobjects)
+(in-package #:fast-generic-functions)
 
 (defun expand-effective-method-body
     (effective-method generic-function lambda-list)

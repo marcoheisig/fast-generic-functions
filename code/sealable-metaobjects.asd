@@ -4,8 +4,6 @@
   :license "MIT"
   :depends-on ("closer-mop" "trivial-macroexpand-all")
 
-  :in-order-to ((test-op (load-op "sealable-metaobjects-test-suite")))
-
   :serial t
   :components
   ((:file "packages")
@@ -18,17 +16,6 @@
    (:file "potentially-sealable-method")
    (:file "sealable-generic-function")
 
-   ;; Fast Generic Functions.
-   (:module "fast-generic-function"
-    :components
-    ((:file "generic-functions")
-     (:file "lambda-lists")
-     (:file "specializer-prototype")
-     (:file "static-call-signature")
-     (:file "fast-method")
-     (:file "fast-generic-function")
-     (:file "expand-effective-method-body")
-     (:file "optimize-function-call")
-     (:file "default" :if-feature (:not (:or :sbcl :ccl)))
-     (:file "sbcl" :if-feature :sbcl)
-     (:file "ccl" :if-feature :ccl)))))
+   ;; Analysis.
+   (:file "specializer-prototype")
+   (:file "static-call-signature")))

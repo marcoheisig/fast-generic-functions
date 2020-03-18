@@ -1,4 +1,4 @@
-(in-package #:sealable-metaobjects-test-suite)
+(in-package #:fast-generic-functions-test-suite)
 
 (defun generic-+ (&rest things)
   (cond ((null things) 0)

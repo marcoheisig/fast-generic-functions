@@ -22,6 +22,14 @@
   (:method ((method method))
     (metaobject-sealable-p method)))
 
+(defgeneric specializer-sealable-p (specializer)
+  (:method ((class class))
+    (class-sealable-p class))
+  (:method ((eql-specializer eql-specializer))
+    (class-sealable-p
+     (class-of
+      (eql-specializer-object eql-specializer)))))
+
 ;;; Checking for sealed-ness.
 
 (defgeneric metaobject-sealed-p (metaobject)
@@ -43,6 +51,14 @@
 (defgeneric method-sealed-p (method)
   (:method ((method method))
     (metaobject-sealed-p method)))
+
+(defgeneric specializer-sealed-p (specializer)
+  (:method ((class class))
+    (class-sealed-p class))
+  (:method ((eql-specializer eql-specializer))
+    (specializer-sealed-p
+     (class-of
+      (eql-specializer-object eql-specializer)))))
 
 ;;; Sealing of metaobjects.
 
@@ -89,24 +105,6 @@
 
 (defgeneric seal-domain (generic-function domain))
 
-;;; Working with specializers.
-
-(defgeneric specializer-sealable-p (specializer)
-  (:method ((class class))
-    (class-sealable-p class))
-  (:method ((eql-specializer eql-specializer))
-    (class-sealable-p
-     (class-of
-      (eql-specializer-object eql-specializer)))))
-
-(defgeneric specializer-sealed-p (specializer)
-  (:method ((class class))
-    (class-sealed-p class))
-  (:method ((eql-specializer eql-specializer))
-    (specializer-sealed-p
-     (class-of
-      (eql-specializer-object eql-specializer)))))
-
 (defgeneric seal-specializer (specializer)
   (:method ((class class))
     (seal-class class))
@@ -115,11 +113,44 @@
      (class-of
       (eql-specializer-object eql-specializer)))))
 
+;;; Working with specializers.
+
 (defgeneric specializer-type (specializer)
   (:method ((class class))
     (class-name class))
   (:method ((eql-specializer eql-specializer))
     `(eql ,(eql-specializer-object eql-specializer))))
+
+(defgeneric specializer-prototype (specializer &optional excluded-specializers)
+  (:documentation
+   "Returns an object that is of the type indicated by SPECIALIZER, but not
+of any of the types indicated the optionally supplied
+EXCLUDED-SPECIALIZERS.  Returns a secondary value of T if such an object
+could be determined, and NIL if no such object was found.
+
+Examples:
+ (specializer-prototype
+   (find-class 'double-float))
+ => 5.0d0, T
+
+ (specializer-prototype
+   (find-class 'double-float)
+   (list (intern-eql-specializer 5.0d0)))
+ => 6.0d0, T
+
+ (specializer-prototype
+   (find-class 'real)
+   (list (find-class 'rational) (find-class 'float)))
+ => NIL, NIL
+"))
+
+(defgeneric specializer-direct-superspecializers (specializer)
+  (:method ((class class))
+    (class-direct-superclasses class))
+  (:method ((eql-specializer eql-specializer))
+    (list
+     (class-of
+      (eql-specializer-object eql-specializer)))))
 
 (defgeneric specializer-intersectionp (specializer-1 specializer-2)
   (:method ((class-1 class) (class-2 class))
@@ -166,6 +197,17 @@
   (:method ((method method) (method-property t))
     nil))
 
+;;; Miscellaneous
+
 (defgeneric sealed-domains (generic-function))
 
 (defgeneric (setf sealed-domains) (value generic-function))
+
+(defgeneric compute-static-call-signatures (generic-function domain))
+
+(defgeneric externalizable-object-p (object)
+  (:method ((object t))
+    (typep (class-of object) 'built-in-class))
+  (:method ((structure-object structure-object)) t)
+  (:method ((standard-object standard-object))
+    (and (make-load-form standard-object) t)))

@@ -1,4 +1,4 @@
-(in-package #:sealable-metaobjects-test-suite)
+(in-package #:fast-generic-functions-test-suite)
 
 (defgeneric generic-find (item sequence &key test)
   (:argument-precedence-order sequence item)

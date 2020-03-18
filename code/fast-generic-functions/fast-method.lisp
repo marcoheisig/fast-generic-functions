@@ -1,4 +1,4 @@
-(in-package #:sealable-metaobjects)
+(in-package #:fast-generic-functions)
 
 (defclass fast-method (potentially-sealable-standard-method)
   ((%lambda

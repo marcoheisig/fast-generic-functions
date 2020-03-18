@@ -1,4 +1,10 @@
-(in-package #:sealable-metaobjects)
+(in-package #:fast-generic-functions)
+
+(defmethod optimize-function-call :around
+  ((fast-generic-function fast-generic-function)
+   (static-call-signature static-call-signature))
+  (call-next-method)
+  #+(or)(print (call-next-method)))
 
 (defmethod optimize-function-call
     ((fast-generic-function fast-generic-function)
