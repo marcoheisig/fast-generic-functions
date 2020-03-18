@@ -1,125 +1,26 @@
-#+TITLE: Sealable Metaobjects
+#+TITLE: Fast Generic Functions
 
-* Introduction
-We present an extension of the Common Lisp Object System (CLOS) that allows
-a compiler to inline a generic function under certain conditions.
+This library introduces /fast generic functions/, i.e., functions that
+behave just like regular generic functions, except that the can be sealed
+on certain domains.  If the compiler can then statically detect that the
+arguments to a fast generic function fall within this domain, it will
+perform a variety of optimizations.
 
-We should note that moving parts of the callee into the caller is usually a
-very bad idea.  It prevents safe and efficient function redefinition and
-inflates the amount of generated machine code at the call site.  Most
-severely, when moving parts of a generic function to the caller, we lose
-the ability to redefine or extend some of the involved objects and
-metaobjects.
-
-Nevertheless, there are two cases where the aforementioned drawbacks are
-tolerable.  The one case is when passing built-in Common Lisp objects to
-specified functions.  The other case is for user code that has such extreme
-performance demands that the alternative of using this technique would be
-to refrain from using generic functions altogether.
-
-* The Technique
-The goal is to inline a generic function under certain circumstances.
-These circumstances are:
-
-1. It is possible to statically determine the generic function being
-   called.
-
-2. This generic function is sealed, i.e., it is an instance of
-   SEALABLE-GENERIC-FUNCTION that has previously been passed to the
-   function SEAL-GENERIC-FUNCTION.
-
-3. This sealed generic function has at least one sealed method, i.e., a
-   method of type POTENTIALLY-SEALABLE-METHOD that specializes, on each
-   relevant argument, on a built-in or sealed class, or an eql specializer
-   whose object is an instance of a built-in or sealed class.
-
-4. It must be possible to determine, statically, that the types of all
-   arguments in a specializing position uniquely determine the list of
-   applicable methods.
-
-* Examples
-The following examples illustrate how sealable metaobjects can be used.
-Each example code can be evaluated as-is.  However, for actual use, we
-recommend the following practices:
-
-- Sealable generic functions should be defined in a separate file that is
-  loaded early.  If this is not done, its methods may not use the correct
-  method-class.  (An alternative is to specify the method class of each
-  method explicitly).
-- Metaobject sealing should be the very last step when loading a project.
-  Ideally, all calls to SEAL-GENERIC-FUNCTION should be in a separate file
-  that ASDF loads last.  This way, sealing can also be disabled
-  conveniently, e.g., to measure whether sealing actually improves
-  performance (Which you should do!).
-
-*** Generic Plus
-This example shows how one can implement a generic version of =cl:+=.
-
-#+BEGIN_SRC lisp
-(defgeneric generic-binary-+ (a b)
-  (:generic-function-class sealable-metaobjects:fast-generic-function))
-
-(defmethod generic-binary-+ ((a number) (b number))
-  (+ a b))
-
-(defmethod generic-binary-+ ((a character) (b character))
-  (+ (char-code a)
-     (char-code b)))
-
-(sealable-metaobjects:seal-domain #'generic-binary-+ '(number number))
-(sealable-metaobjects:seal-domain #'generic-binary-+ '(character character))
-
-(defun generic-+ (&rest things)
-  (cond ((null things) 0)
-        ((null (rest things)) (first things))
-        (t (reduce #'generic-binary-+ things))))
-
-(define-compiler-macro generic-+ (&rest things)
-  (cond ((null things) 0)
-        ((null (rest things)) (first things))
-        (t
-         (flet ((symbolic-generic-binary-+ (a b)
-                  `(generic-binary-+ ,a ,b)))
-           (reduce #'symbolic-generic-binary-+ things)))))
-#+END_SRC
-
-You can quickly verify that this new operator is as efficient as =cl:+=:
-
-#+BEGIN_SRC lisp
-(defun triple-1 (x)
-  (declare (single-float x))
-  (+ x x x))
-
-(defun triple-2 (x)
-  (declare (single-float x))
-  (generic-+ x x x))
-
-;;; Both functions should compile to the same assembler code.
-(disassemble #'triple-1)
-(disassemble #'triple-2)
-#+END_SRC
-
-Yet, other than =cl:+=, =generic-+= can be extended by the user, just like
-a regular generic function.  The only restriction is that new methods must
-not interfere with the behavior of methods that specialize on sealed types
-only.
-
-*** Generic Find
-This example illustrates how one can implement a fast, generic version of =cl:find=.
+* Example 1 - Generic Find
 
 #+BEGIN_SRC lisp
 (defgeneric generic-find (item sequence &key test)
-  (:generic-function-class sealable-metaobjects:fast-generic-function))
+  (:generic-function-class fast-generic-function))
 
-(defmethod generic-find (elt (list list) &key (test #'eql))
+(defmethod generic-find (item (list list) &key (test #'eql))
   (and (member elt list :test test)
        t))
 
-(defmethod generic-find (elt (vector vector) &key (test #'eql))
+(defmethod generic-find (item (vector vector) &key (test #'eql))
   (cl:find elt vector :test test))
 
-(sealable-metaobjects:seal-domain #'generic-find '(t list))
-(sealable-metaobjects:seal-domain #'generic-find '(t vector))
+(seal-domain #'generic-find '(t list))
+(seal-domain #'generic-find '(t vector))
 
 (defun small-prime-p (x)
   (generic-find x '(2 3 5 7 11)))
@@ -129,9 +30,77 @@ This example illustrates how one can implement a fast, generic version of =cl:fi
 (disassemble #'small-prime-p)
 #+END_SRC
 
-* Related Work
-- https://github.com/guicho271828/inlined-generic-function
-- https://opendylan.org/books/drm/Define_Sealed_Domain
-- https://github.com/markcox80/specialization-store
-- http://home.pipeline.com/~hbaker1/CLOStrophobia.html
-- Generic Function Sealing by Paul Khuong (unpublished)
+It is even possible to inline the entire effective method into the call
+site.  However, to avoid code bloat, this feature is disabled by default.
+To enable it, each method withing the sealed domain must contain an
+appropriate declaration, as shown in the next example.
+
+* Example 2 - Extensible Number Functions
+
+#+BEGIN_SRC lisp
+(defgeneric binary-+ (x y)
+  (:generic-function-class fast-generic-function))
+
+(defmethod binary-+ ((x number) (y number))
+  (declare (method-properties inlineable))
+  (+ x y))
+
+(seal-domain #'binary-+ '(number number))
+#+END_SRC
+
+It is easy to generalize such a binary function to a function that accepts
+any number of arguments:
+
+#+BEGIN_SRC lisp
+(defun generic-+ (&rest things)
+  (cond ((null things) 0)
+        ((null (rest things)) (first things))
+        (t (reduce #'binary-+ things))))
+
+(define-compiler-macro generic-+ (&rest things)
+  (cond ((null things) 0)
+        ((null (rest things)) (first things))
+        (t (reduce (lambda (a b) `(binary-+ ,a ,b)) things))))
+#+END_SRC
+
+With all this in place, we can use our =generic-+= function much like
+Common Lisp's built-in =+= without worrying about performance.  The next
+code snippet shows that in fact, each call to =generic-+= is inlined and
+turned into a single =addss= instruction.
+
+#+BEGIN_SRC lisp
+(disassemble
+ (compile nil
+   '(lambda (x y z)
+     (declare (single-float x y z))
+     (generic-+ x y z))))
+
+;; disassembly for (lambda (x y z))
+;; Size: 38 bytes. Origin: #x52FD9354
+;; 54:       498B4510         mov RAX, [R13+16]
+;; 58:       488945F8         mov [RBP-8], RAX
+;; 5C:       0F28CC           movaps XMM1, XMM4
+;; 5F:       F30F58CB         addss XMM1, XMM3
+;; 63:       F30F58CA         addss XMM1, XMM2
+;; 67:       660F7ECA         movd EDX, XMM1
+;; 6B:       48C1E220         shl RDX, 32
+;; 6F:       80CA19           or DL, 25
+;; 72:       488BE5           mov RSP, RBP
+;; 75:       F8               clc
+;; 76:       5D               pop RBP
+;; 77:       C3               ret
+;; 78:       CC10             int3 16
+#+END_SRC
+
+Once a fast generic function has been sealed, it is not possible to add,
+remove, or redefine methods within the sealed domain.  However, outside of
+the sealed domain, it behaves just like a standard generic function.  That
+means we can extend its behavior, e.g., to allow addition of strings:
+
+#+BEGIN_SRC lisp
+(defmethod binary-+ ((x string) (y string))
+  (concatenate 'string x y))
+
+(generic-+ "foo" "bar" "baz")
+;; => "foobarbaz"
+#+END_SRC

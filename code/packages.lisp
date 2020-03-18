@@ -1,48 +1,31 @@
 (cl:in-package #:cl-user)
 
-(defpackage #:sealable-metaobjects
-  (:use #:closer-common-lisp)
-  (:export
+(defpackage #:fast-generic-functions
+  (:use
+   #:closer-common-lisp)
 
-   #:metaobject-sealable-p
-   #:class-sealable-p
-   #:generic-function-sealable-p
-   #:method-sealable-p
-   #:specializer-sealable-p
-
-   #:metaobject-sealed-p
-   #:class-sealed-p
-   #:generic-function-sealed-p
-   #:method-sealed-p
-   #:specializer-sealed-p
-
-   #:seal-class
-   #:seal-generic-function
-   #:seal-method
-   #:seal-domain
-   #:seal-specializer
-
-   #:specializer-type
-   #:specializer-prototype
-   #:specializer-direct-superspecializers
-   #:specializer-intersectionp
-   #:specializer-subtypep
-   #:domain-intersectionp
-   #:domain-subtypep
-
+  (:import-from
+   #:sealable-metaobjects
    #:method-properties
    #:validate-method-property
-
+   #:seal-domain
+   #:sealed-domains
+   #:compute-static-call-signatures
    #:static-call-signature
    #:static-call-signature-types
    #:static-call-signature-prototypes
-
-   #:sealed-domains
-   #:compute-static-call-signatures
    #:externalizable-object-p
    #:sealable-class
    #:sealable-generic-function
    #:sealable-standard-generic-function
    #:potentially-sealable-method
-   #:potentially-sealable-standard-method))
+   #:potentially-sealable-standard-method)
 
+  (:export
+   #:method-properties
+   #:seal-domain
+   #:validate-method-property
+   #:fast-generic-function
+   #:fast-method
+   #:inlineable
+   #:no-primary-method))
