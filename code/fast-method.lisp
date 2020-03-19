@@ -11,7 +11,7 @@
   t)
 
 (defmethod make-method-lambda :around
-    ((generic-function generic-function)
+    ((gf sealable-standard-generic-function)
      (fast-method fast-method)
      lambda
      environment)
@@ -21,7 +21,7 @@
      method-lambda
      (list*
       '.lambda.
-      (make-fast-method-lambda generic-function fast-method lambda environment)
+      (make-fast-method-lambda gf fast-method lambda environment)
       initargs))))
 
 (defun make-fast-method-lambda
