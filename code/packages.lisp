@@ -9,6 +9,7 @@
    #:method-properties
    #:validate-method-property
    #:seal-domain
+   #:domain
    #:sealed-domains
    #:compute-static-call-signatures
    #:static-call-signature

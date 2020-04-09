@@ -2,7 +2,7 @@
 
 (defmethod seal-domain :after
     ((fast-generic-function fast-generic-function)
-     (domain list))
+     (domain domain))
   (let ((name (generic-function-name fast-generic-function)))
     ;; Ensure that the function is known.
     (eval `(sb-c:defknown ,name * * () :overwrite-fndb-silently t))
