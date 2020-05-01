@@ -16,7 +16,7 @@
                       always (compiler-typep argument type environment))
             (return-from compiler-macro
               `(funcall
-                ,(fast-generic-function-lambda fast-generic-function scs)
+                ,(optimize-function-call fast-generic-function static-call-signature)
                 ,@(rest form))))))
       form)))
 
