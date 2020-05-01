@@ -6,3 +6,11 @@
   (:default-initargs
    :method-class (find-class 'fast-method))
   (:metaclass funcallable-standard-class))
+
+(defmethod compute-effective-method-function
+    ((fgf fast-generic-function) effective-method options)
+  (let ((lambda-list (generic-function-lambda-list fgf)))
+    (compile
+     nil
+     `(lambda ,lambda-list
+        (expand-effective-method-body effective-method generic-function lambda-list)))))
