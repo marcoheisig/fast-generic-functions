@@ -13,4 +13,4 @@
     (compile
      nil
      `(lambda ,lambda-list
-        (expand-effective-method-body effective-method generic-function lambda-list)))))
+        ,(expand-effective-method-body effective-method fgf lambda-list)))))
