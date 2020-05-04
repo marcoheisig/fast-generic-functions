@@ -129,7 +129,7 @@
                 for m-info in m-optional
                 append
                 (if (null (optional-info-suppliedp g-info))
-                    `((optional-info-variable g-info))
+                    `(,(optional-info-variable g-info))
                     (let ((value
                             `(if ,(optional-info-suppliedp g-info)
                                  ,(optional-info-variable g-info)

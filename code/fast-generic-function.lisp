@@ -9,7 +9,12 @@
 
 (defmethod compute-effective-method-function
     ((fgf fast-generic-function) effective-method options)
-  (let ((lambda-list (generic-function-lambda-list fgf)))
+  (let ((lambda-list
+          (anonymize-ordinary-lambda-list
+           ;; Unfortunately, we don't know the list of applicable methods
+           ;; anymore at this stage.  So instead, we consider all methods
+           ;; applicable.
+           (compute-effective-method-lambda-list fgf (generic-function-methods fgf)))))
     (compile
      nil
      `(lambda ,lambda-list
