@@ -1,8 +1,8 @@
 (in-package #:fast-generic-functions)
 
 (defmethod optimize-function-call :around
-  ((fast-generic-function fast-generic-function)
-   (static-call-signature static-call-signature))
+    ((fast-generic-function fast-generic-function)
+     (static-call-signature static-call-signature))
   (call-next-method))
 
 (defmethod optimize-function-call

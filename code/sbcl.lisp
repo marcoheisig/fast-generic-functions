@@ -5,7 +5,8 @@
      (domain domain))
   (let ((name (generic-function-name fast-generic-function)))
     ;; Ensure that the function is known.
-    (eval `(sb-c:defknown ,name * * () :overwrite-fndb-silently t))
+    (unless (sb-c::info :function :info name)
+      (eval `(sb-c:defknown ,name * * ())))
     ;; Create an IR1-transform for each static call signature.
     (dolist (static-call-signature (compute-static-call-signatures fast-generic-function domain))
       (with-accessors ((types static-call-signature-types)
