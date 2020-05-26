@@ -13,11 +13,11 @@ perform a variety of optimizations.
   (:generic-function-class fast-generic-function))
 
 (defmethod generic-find (item (list list) &key (test #'eql))
-  (and (member elt list :test test)
+  (and (member item list :test test)
        t))
 
 (defmethod generic-find (item (vector vector) &key (test #'eql))
-  (cl:find elt vector :test test))
+  (cl:find item vector :test test))
 
 (seal-domain #'generic-find '(t list))
 (seal-domain #'generic-find '(t vector))
