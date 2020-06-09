@@ -3,15 +3,27 @@
 This library introduces /fast generic functions/, i.e., functions that
 behave just like regular generic functions, except that the can be sealed
 on certain domains.  If the compiler can then statically detect that the
-arguments to a fast generic function fall within this domain, it will
+arguments to a fast generic function fall within such a domain, it will
 perform a variety of optimizations.
 
 * Example 1 - Generic Find
 
+This example illustrates how one can define a (hopefully) fast method
+for finding items in a sequence.
+
+The first step is to define a generic function whose generic function class
+is =fast-generic-function=.
+
 #+BEGIN_SRC lisp
 (defgeneric generic-find (item sequence &key test)
-  (:generic-function-class fast-generic-function))
+  (:generic-function-class fast-generic-functions:fast-generic-function))
+#+END_SRC
 
+Once this definition is loaded (and only then, so you shouldn't put the
+next snippets in the same file as the defgeneric form), it is possible to
+add methods to it in the usual way.
+
+#+BEGIN_SRC lisp
 (defmethod generic-find (item (list list) &key (test #'eql))
   (and (member item list :test test)
        t))
@@ -21,12 +33,26 @@ perform a variety of optimizations.
 
 (seal-domain #'generic-find '(t list))
 (seal-domain #'generic-find '(t vector))
+#+END_SRC
 
+The novelty are the two calls to =seal-domain=.  These calls seal the
+specified part of the function domain, and at the same time install
+compiler optimizations for calls to that generic function.
+
+Whenever the compiler can detect that the arguments of a call to a fast
+generic function fall within such a sealed domain, the entire call can be
+optimized in a variety of ways.  By default, the call to the fast generic
+function's discriminating function will be replaced by a direct call to a
+custom effective method function.  This means that there will be zero
+overhead for determining the generic function's behavior.  The following
+example illustrates this:
+
+#+BEGIN_SRC lisp
 (defun small-prime-p (x)
   (generic-find x '(2 3 5 7 11)))
 
 ;; The call to GENERIC-FIND should have been replaced by a direct call to
-;; the appropriate effective method.
+;; the appropriate effective method function.
 (disassemble #'small-prime-p)
 #+END_SRC
 
@@ -104,3 +130,79 @@ means we can extend its behavior, e.g., to allow addition of strings:
 (generic-+ "foo" "bar" "baz")
 ;; => "foobarbaz"
 #+END_SRC
+
+* Specializing on a User-Defined Class
+
+By default, only built-in classes and structure classes can appear as
+specializers of a method within a sealed domain of a fast generic function.
+However, it is also possible to define custom sealable classes.  This
+example illustrates how.
+
+Since this example has plenty of dependencies (metaobject definition and
+use, generic function definition and method defintion, sealing and use of a
+sealed function), each of the following snippets of code should be put into
+its own file.
+
+In the first snippet, we define sealable standard class, that is both a
+sealable class and a standard class.
+
+#+BEGIN_SRC lisp
+(defclass sealable-standard-class
+    (sealable-metaobjects:sealable-class standard-class)
+  ())
+
+(defmethod validate-superclass
+    ((class sealable-standard-class)
+     (superclass standard-class))
+  t)
+#+END_SRC
+
+In the next snippet, we define a class =foo= whose metaclass is our newly
+introduced =sealable-standard-class=.  Because the implementation of fast
+generic functions uses literal instances to find an optimized effective
+method function at load time, each sealable class must also have a suitable
+method on =make-load-form=.
+
+#+BEGIN_SRC lisp
+(defclass foo ()
+  ((x :reader x :initarg :x))
+  (:metaclass sealable-standard-class))
+
+(defmethod make-load-form ((foo foo) &optional env)
+  (make-load-form-saving-slots foo :slot-names '(x) :environment env))
+#+END_SRC
+
+In the next snippet, we define a fast generic function =op=.
+
+#+BEGIN_SRC lisp
+(defgeneric op (foo)
+  (:generic-function-class fast-generic-functions:fast-generic-function))
+#+END_SRC
+
+Once we have loaded the definition of =op=, we can add individual methods
+and seal some of them.  In particular, we can add a method that specializes
+on the =foo= class.
+
+We could also have defined this method without =foo= being a sealable
+class, but then the call to =seal-domain= would have signaled an error.
+
+#+BEGIN_SRC lisp
+(defmethod op ((foo foo))
+  (* 2 (x foo)))
+
+(sealable-metaobjects:seal-domain #'op '(foo))
+#+END_SRC
+
+Finally, we have everything in place for having optimized calls to =op= in
+the case where its argument is of type =foo=.
+
+#+BEGIN_SRC lisp
+(defun bar ()
+  (let ((foo (make-instance 'foo :x 42)))
+    (declare (foo foo))
+    (op foo)))
+#+END_SRC
+
+If this example is too intimidating for you, please remember that you can
+always specialize fast methods on built-in classes (like integer and
+simple-vector) or structure classes (everything defined via =defstruct=).
