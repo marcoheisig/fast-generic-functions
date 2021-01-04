@@ -1,11 +1,22 @@
 (in-package #:fast-generic-functions)
 
-(defun starts-with (item)
-  (lambda (sequence)
-    (typecase sequence
-      (list (eql (first sequence) item))
-      (sequence (eql (elt sequence 0) item))
-      (otherwise nil))))
+(defun parse-body (body)
+  (let ((declarations '())
+        (documentation nil))
+    (loop for (item . rest) on body do
+      (cond ((and (stringp item) (consp rest))
+             (if (not documentation)
+                 (setf documentation item)
+                 (error "Multiple documentation strings in body: ~%~S~% and~%~S."
+                        documentation item)))
+            ((and (listp item) (eq (first item) 'declare))
+             (push item declarations))
+            (t
+             (return-from parse-body
+               (values
+                (list* item rest)
+                (reverse declarations)
+                documentation)))))))
 
 (defun block-name (function-name)
   (etypecase function-name
