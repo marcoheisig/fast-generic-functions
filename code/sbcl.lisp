@@ -13,6 +13,6 @@
                        (prototypes static-call-signature-prototypes))
           static-call-signature
         (eval
-         `(sb-c:deftransform ,name ((&rest args) (,@types &rest *))
+         `(sb-c:deftransform ,name ((&rest args) (,@types &rest t))
             (or (optimize-function-call #',name ',static-call-signature)
                 (sb-c::give-up-ir1-transform))))))))
